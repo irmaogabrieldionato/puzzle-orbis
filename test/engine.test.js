@@ -4,3 +4,5 @@ test('validação de salvamento rejeita peças repetidas, ausentes e inválidas'
 test('quantidades oficiais dos dez níveis',()=>{assert.deepEqual(CUTS,[4,8,16,32,64,108,216,432,862,1724])});
 
 test('dimensionamento seguro de imagens',()=>{assert.deepEqual(canvasSize(1920,1080),{width:640,height:360});assert.deepEqual(canvasSize(100,1000),{width:640,height:4096});assert.deepEqual(canvasSize(1000,1),{width:640,height:1});for(const [w,h] of [[0,10],[10,0],[NaN,10],[Infinity,10],[-1,20]])assert.equal(canvasSize(w,h),null)});
+
+test('idiomas oficiais sem substituições',()=>{assert.deepEqual(LANGUAGES,['English','中文','हिन्दी','Español','Français','العربية','বাংলা','Русский','Português','Bahasa Indonesia','اردو','Deutsch','日本語','Kiswahili','मराठी'])});
