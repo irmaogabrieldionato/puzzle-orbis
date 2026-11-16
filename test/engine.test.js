@@ -8,3 +8,5 @@ test('dimensionamento seguro de imagens',()=>{assert.deepEqual(canvasSize(1920,1
 test('idiomas oficiais sem substituições',()=>{assert.deepEqual(LANGUAGES,['English','中文','हिन्दी','Español','Français','العربية','বাংলা','Русский','Português','Bahasa Indonesia','اردو','Deutsch','日本語','Kiswahili','मराठी'])});
 
 test('progresso vazio ou inválido não retorna NaN',()=>{assert.equal(progress([]),0);assert.equal(progress(null),0);assert.equal(progress(undefined),0);assert.equal(progress([0,1,2,3]),100);assert.equal(progress([1,0,2,3]),50)});
+
+test('tabuleiro vazio ou inválido nunca é considerado concluído',()=>{assert.equal(solved([]),false);assert.equal(solved(null),false);assert.equal(solved(undefined),false);assert.equal(solved([0]),true);assert.equal(solved([1,0]),false)});
