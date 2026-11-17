@@ -12,3 +12,5 @@ test('progresso vazio ou inválido não retorna NaN',()=>{assert.equal(progress(
 test('tabuleiro vazio ou inválido nunca é considerado concluído',()=>{assert.equal(solved([]),false);assert.equal(solved(null),false);assert.equal(solved(undefined),false);assert.equal(solved([0]),true);assert.equal(solved([1,0]),false)});
 
 test('progresso rejeita estados de peças corrompidos',()=>{assert.equal(progress([0,1,1,3]),0);assert.equal(progress([0,1,2,9]),0);assert.equal(progress([0,1,2,'3']),0);assert.equal(progress([1,0,2,3]),50)});
+
+test('embaralhamento mantém permutação válida com valores extremos do gerador',()=>{for(const n of CUTS){for(const value of [0,0.4,1,-1,NaN,Infinity]){const pieces=shuffled(n,()=>value);assert.equal(pieces.length,n);assert.equal(isPermutation(pieces,n),true);assert.equal(solved(pieces),false)}}});
