@@ -10,3 +10,5 @@ test('idiomas oficiais sem substituições',()=>{assert.deepEqual(LANGUAGES,['En
 test('progresso vazio ou inválido não retorna NaN',()=>{assert.equal(progress([]),0);assert.equal(progress(null),0);assert.equal(progress(undefined),0);assert.equal(progress([0,1,2,3]),100);assert.equal(progress([1,0,2,3]),50)});
 
 test('tabuleiro vazio ou inválido nunca é considerado concluído',()=>{assert.equal(solved([]),false);assert.equal(solved(null),false);assert.equal(solved(undefined),false);assert.equal(solved([0]),true);assert.equal(solved([1,0]),false)});
+
+test('progresso rejeita estados de peças corrompidos',()=>{assert.equal(progress([0,1,1,3]),0);assert.equal(progress([0,1,2,9]),0);assert.equal(progress([0,1,2,'3']),0);assert.equal(progress([1,0,2,3]),50)});
