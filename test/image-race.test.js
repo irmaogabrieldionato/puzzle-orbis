@@ -21,7 +21,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
   try {
     globalThis.document = {getElementById:element};
     globalThis.Option = class { constructor(label,value){this.label=label;this.value=value} };
-    globalThis.navigator = {};
+    Object.defineProperty(globalThis,'navigator',{configurable:true,writable:true,value:{}});
     globalThis.localStorage = {getItem(){return null},setItem(){}};
     globalThis.FileReader = class {
       constructor(){pendingReads.push(this)}
