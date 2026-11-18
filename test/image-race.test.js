@@ -47,6 +47,22 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     pendingReads[0].onload();
     assert.equal(pendingImages.length,1,'a leitura antiga não deve iniciar uma nova imagem');
     assert.equal(element('status').textContent,statusAfterSecond);
+
+    // Two valid FileReader completions, followed by Image.onload in reverse order.
+    picker.files=[{type:'image/png',size:100,data:'data:image/png;base64,third'}];
+    picker.onchange({target:picker});
+    pendingReads[2].onload();
+    assert.equal(pendingImages.length,2);
+    picker.files=[{type:'image/png',size:100,data:'data:image/png;base64,fourth'}];
+    picker.onchange({target:picker});
+    pendingReads[3].onload();
+    assert.equal(pendingImages.length,3);
+    pendingImages[2].onload();
+    assert.equal(element('status').textContent,'Concluído: '+element('status').textContent.split('Concluído: ')[1]);
+    const statusAfterFourth=element('status').textContent;
+    pendingImages[1].onload();
+    assert.equal(element('status').textContent,statusAfterFourth,'Image.onload antigo não deve substituir estado recente');
+    assert.equal(pendingImages[2].src,'data:image/png;base64,fourth');
   } finally {
     for (const [key,descriptor] of Object.entries(original)) {
       if (descriptor) Object.defineProperty(globalThis,key,descriptor);
