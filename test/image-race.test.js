@@ -7,6 +7,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
   const elements = new Map();
   const pendingReads = [];
   const pendingImages = [];
+  const saved = new Map();
   const context = { clearRect(){}, drawImage(){}, strokeRect(){}, set strokeStyle(v){}, set lineWidth(v){}, set globalAlpha(v){} };
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
@@ -22,7 +23,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     globalThis.document = {getElementById:element};
     globalThis.Option = class { constructor(label,value){this.label=label;this.value=value} };
     Object.defineProperty(globalThis,'navigator',{configurable:true,writable:true,value:{}});
-    globalThis.localStorage = {getItem(){return null},setItem(){}};
+    globalThis.localStorage = {getItem(key){return saved.get(key) ?? null},setItem(key,value){saved.set(key,value)}};
     globalThis.FileReader = class {
       constructor(){pendingReads.push(this)}
       readAsDataURL(file){this.result=file.data}
@@ -63,6 +64,8 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     pendingImages[1].onload();
     assert.equal(element('status').textContent,statusAfterFourth,'Image.onload antigo não deve substituir estado recente');
     assert.equal(pendingImages[2].src,'data:image/png;base64,fourth');
+    element('save').onclick();
+    assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).image,'data:image/png;base64,fourth','a imagem antiga não deve substituir a imagem persistida');
   } finally {
     for (const [key,descriptor] of Object.entries(original)) {
       if (descriptor) Object.defineProperty(globalThis,key,descriptor);
