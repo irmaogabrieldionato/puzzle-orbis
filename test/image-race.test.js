@@ -66,6 +66,29 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     assert.equal(pendingImages[2].src,'data:image/png;base64,fourth');
     element('save').onclick();
     assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).image,'data:image/png;base64,fourth','a imagem antiga não deve substituir a imagem persistida');
+
+    // Rejecting a later selection must invalidate a still-pending valid read.
+    picker.files=[{type:'image/png',size:100,data:'data:image/png;base64,fifth'}];
+    picker.onchange({target:picker});
+    assert.equal(pendingReads.length,5);
+    picker.files=[{type:'text/plain',size:100,data:'invalid'}];
+    picker.onchange({target:picker});
+    assert.match(element('status').textContent,/imagem válida/);
+    pendingReads[4].onload();
+    assert.equal(pendingImages.length,3,'a seleção inválida deve cancelar a leitura pendente');
+
+    // A file exceeding the limit must also invalidate a pending image onload.
+    picker.files=[{type:'image/png',size:100,data:'data:image/png;base64,sixth'}];
+    picker.onchange({target:picker});
+    pendingReads[5].onload();
+    assert.equal(pendingImages.length,4);
+    picker.files=[{type:'image/png',size:9*1024*1024,data:'oversize'}];
+    picker.onchange({target:picker});
+    assert.match(element('status').textContent,/máximo 8 MB/);
+    pendingImages[3].onload();
+    assert.match(element('status').textContent,/máximo 8 MB/);
+    element('save').onclick();
+    assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).image,'data:image/png;base64,fourth');
   } finally {
     for (const [key,descriptor] of Object.entries(original)) {
       if (descriptor) Object.defineProperty(globalThis,key,descriptor);
