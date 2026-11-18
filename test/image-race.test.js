@@ -58,7 +58,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     pendingReads[3].onload();
     assert.equal(pendingImages.length,3);
     pendingImages[2].onload();
-    assert.equal(element('status').textContent,'Concluído: '+element('status').textContent.split('Concluído: ')[1]);
+    assert.match(element('status').textContent,/Concluído:/);
     const statusAfterFourth=element('status').textContent;
     pendingImages[1].onload();
     assert.equal(element('status').textContent,statusAfterFourth,'Image.onload antigo não deve substituir estado recente');
