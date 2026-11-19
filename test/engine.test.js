@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {CUTS,LANGUAGES,dimensions,shuffled,swap,solved,progress,isPermutation,canvasSize} from '../src/engine.js';test('10 níveis e 15 idiomas',()=>{assert.equal(CUTS.length,10);assert.equal(LANGUAGES.length,15)});for(const n of CUTS)test('nível '+n,()=>{const {rows,cols}=dimensions(n);assert.ok(rows*cols>=n);assert.ok(rows*cols-n<cols);const p=shuffled(n,()=>.4);assert.equal(new Set(p).size,n);assert.equal(solved(p),false);const q=Array.from({length:n},(_,i)=>i);assert.equal(solved(q),true);assert.equal(progress(q),100);assert.equal(swap(q,0,1)[0],1);assert.equal(q[0],0)});
+import test from 'node:test';import assert from 'node:assert/strict';import {CUTS,LANGUAGES,dimensions,shuffled,swap,solved,progress,isPermutation,canvasSize,pieceRect,pieceAt} from '../src/engine.js';test('10 níveis e 15 idiomas',()=>{assert.equal(CUTS.length,10);assert.equal(LANGUAGES.length,15)});for(const n of CUTS)test('nível '+n,()=>{const {rows,cols}=dimensions(n);assert.ok(rows*cols>=n);assert.ok(rows*cols-n<cols);const p=shuffled(n,()=>.4);assert.equal(new Set(p).size,n);assert.equal(solved(p),false);const q=Array.from({length:n},(_,i)=>i);assert.equal(solved(q),true);assert.equal(progress(q),100);assert.equal(swap(q,0,1)[0],1);assert.equal(q[0],0)});
 test('validação de salvamento rejeita peças repetidas, ausentes e inválidas',()=>{assert.equal(isPermutation([0,1,2,3],4),true);assert.equal(isPermutation([0,1,1,3],4),false);assert.equal(isPermutation([0,1,2],4),false);assert.equal(isPermutation([0,1,2,4],4),false);assert.equal(isPermutation([0,1,2,'3'],4),false);assert.equal(isPermutation(null,4),false)});
 
 test('quantidades oficiais dos dez níveis',()=>{assert.deepEqual(CUTS,[4,8,16,32,64,108,216,432,862,1724])});
@@ -18,3 +18,25 @@ test('embaralhamento mantém permutação válida com valores extremos do gerado
 test('conclusão rejeita arrays esparsos e estados malformados',()=>{assert.equal(solved(new Array(4)),false);assert.equal(solved([0,1,,3]),false);assert.equal(solved([0,1,1,3]),false);assert.equal(solved([0,1,2,3]),true)});
 
 test('grades grandes são próximas do quadrado e preservam todas as peças',()=>{for(const n of CUTS){const {rows,cols}=dimensions(n);assert.ok(rows*cols>=n);assert.ok(rows*cols-n<cols);assert.ok(cols-rows<=1)}assert.deepEqual(dimensions(862),{rows:29,cols:30});assert.deepEqual(dimensions(1724),{rows:42,cols:42});assert.throws(()=>dimensions(0),RangeError)});
+
+
+test('cada nível cobre a imagem inteira sem lacunas e os cliques correspondem às peças',()=>{
+ for(const count of CUTS){
+  const {rows,cols}=dimensions(count);
+  for(let row=0;row<rows;row++){
+   const start=row*cols, end=Math.min(count,start+cols);
+   let right=0;
+   for(let i=start;i<end;i++){
+    const r=pieceRect(i,count);
+    assert.ok(Math.abs(r.x-right)<1e-10);
+    assert.ok(Math.abs(r.y-row/rows)<1e-10);
+    right=r.x+r.width;
+    assert.equal(pieceAt(r.x+r.width/2,r.y+r.height/2,count),i);
+   }
+   assert.ok(Math.abs(right-1)<1e-10);
+  }
+ }
+ assert.equal(pieceAt(1,0,862),-1);
+ assert.equal(pieceAt(0,1,862),-1);
+ assert.equal(pieceRect(862,862),null);
+});
