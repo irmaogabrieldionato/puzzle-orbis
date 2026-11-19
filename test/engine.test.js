@@ -16,3 +16,5 @@ test('progresso rejeita estados de peças corrompidos',()=>{assert.equal(progres
 test('embaralhamento mantém permutação válida com valores extremos do gerador',()=>{for(const n of CUTS){for(const value of [0,0.4,1,-1,NaN,Infinity]){const pieces=shuffled(n,()=>value);assert.equal(pieces.length,n);assert.equal(isPermutation(pieces,n),true);assert.equal(solved(pieces),false)}}});
 
 test('conclusão rejeita arrays esparsos e estados malformados',()=>{assert.equal(solved(new Array(4)),false);assert.equal(solved([0,1,,3]),false);assert.equal(solved([0,1,1,3]),false);assert.equal(solved([0,1,2,3]),true)});
+
+test('grades grandes são próximas do quadrado e preservam todas as peças',()=>{for(const n of CUTS){const {rows,cols}=dimensions(n);assert.ok(rows*cols>=n);assert.ok(rows*cols-n<cols);assert.ok(cols-rows<=1)}assert.deepEqual(dimensions(862),{rows:29,cols:30});assert.deepEqual(dimensions(1724),{rows:42,cols:42});assert.throws(()=>dimensions(0),RangeError)});
