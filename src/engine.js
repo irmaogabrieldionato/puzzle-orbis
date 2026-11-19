@@ -2,3 +2,17 @@ export const CUTS=[4,8,16,32,64,108,216,432,862,1724];export const LANGUAGES=['E
 export function isPermutation(values,n){return Number.isInteger(n)&&n>0&&Array.isArray(values)&&values.length===n&&new Set(values).size===n&&Array.from(values).every(x=>Number.isInteger(x)&&x>=0&&x<n)}
 
 export function canvasSize(width,height,maxWidth=640,maxHeight=4096){if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0||!Number.isFinite(maxWidth)||!Number.isFinite(maxHeight)||maxWidth<1||maxHeight<1)return null;const scale=Math.min(maxWidth/width,maxHeight/height);return {width:Math.max(1,Math.round(width*scale)),height:Math.max(1,Math.round(height*scale))}}
+
+// A última linha utiliza toda a largura, sem descartar faixas da imagem.
+export function pieceRect(index,count){
+ if(!Number.isSafeInteger(count)||count<1||!Number.isInteger(index)||index<0||index>=count)return null;
+ const {rows,cols}=dimensions(count),row=Math.floor(index/cols),start=row*cols;
+ const inRow=Math.min(cols,count-start),column=index-start;
+ return {x:column/inRow,y:row/rows,width:1/inRow,height:1/rows};
+}
+export function pieceAt(x,y,count){
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>=1||y<0||y>=1||!Number.isSafeInteger(count)||count<1)return -1;
+ const {rows,cols}=dimensions(count),row=Math.floor(y*rows),start=row*cols;
+ const inRow=Math.min(cols,count-start);
+ return start+Math.min(inRow-1,Math.floor(x*inRow));
+}
