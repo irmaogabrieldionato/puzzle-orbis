@@ -23,3 +23,10 @@ export function centeredCrop(sw,sh,tw,th){
  const ratio=Math.min(sw/tw,sh/th),width=tw*ratio,height=th*ratio;
  return {x:(sw-width)/2,y:(sh-height)/2,width,height};
 }
+
+// Ajusta a peça inteira ao destino sem cortar conteúdo nem deformar proporções.
+export function containedFit(sw,sh,tw,th){
+ if(![sw,sh,tw,th].every(v=>Number.isFinite(v)&&v>0))return null;
+ const scale=Math.min(tw/sw,th/sh),width=sw*scale,height=sh*scale;
+ return {x:(tw-width)/2,y:(th-height)/2,width,height};
+}
