@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {CUTS,LANGUAGES,dimensions,shuffled,swap,solved,progress,isPermutation,canvasSize,pieceRect,pieceAt} from '../src/engine.js';test('10 níveis e 15 idiomas',()=>{assert.equal(CUTS.length,10);assert.equal(LANGUAGES.length,15)});for(const n of CUTS)test('nível '+n,()=>{const {rows,cols}=dimensions(n);assert.ok(rows*cols>=n);assert.ok(rows*cols-n<cols);const p=shuffled(n,()=>.4);assert.equal(new Set(p).size,n);assert.equal(solved(p),false);const q=Array.from({length:n},(_,i)=>i);assert.equal(solved(q),true);assert.equal(progress(q),100);assert.equal(swap(q,0,1)[0],1);assert.equal(q[0],0)});
+import test from 'node:test';import assert from 'node:assert/strict';import {CUTS,LANGUAGES,dimensions,shuffled,swap,solved,progress,isPermutation,canvasSize,pieceRect,pieceAt,centeredCrop} from '../src/engine.js';test('10 níveis e 15 idiomas',()=>{assert.equal(CUTS.length,10);assert.equal(LANGUAGES.length,15)});for(const n of CUTS)test('nível '+n,()=>{const {rows,cols}=dimensions(n);assert.ok(rows*cols>=n);assert.ok(rows*cols-n<cols);const p=shuffled(n,()=>.4);assert.equal(new Set(p).size,n);assert.equal(solved(p),false);const q=Array.from({length:n},(_,i)=>i);assert.equal(solved(q),true);assert.equal(progress(q),100);assert.equal(swap(q,0,1)[0],1);assert.equal(q[0],0)});
 test('validação de salvamento rejeita peças repetidas, ausentes e inválidas',()=>{assert.equal(isPermutation([0,1,2,3],4),true);assert.equal(isPermutation([0,1,1,3],4),false);assert.equal(isPermutation([0,1,2],4),false);assert.equal(isPermutation([0,1,2,4],4),false);assert.equal(isPermutation([0,1,2,'3'],4),false);assert.equal(isPermutation(null,4),false)});
 
 test('quantidades oficiais dos dez níveis',()=>{assert.deepEqual(CUTS,[4,8,16,32,64,108,216,432,862,1724])});
@@ -39,4 +39,19 @@ test('cada nível cobre a imagem inteira sem lacunas e os cliques correspondem �
  assert.equal(pieceAt(1,0,862),-1);
  assert.equal(pieceAt(0,1,862),-1);
  assert.equal(pieceRect(862,862),null);
+});
+
+
+test('recortes centralizados preservam proporção nas trocas de peças',()=>{
+ for(const count of CUTS){for(const sourceIndex of [0,count-1])for(const targetIndex of [0,count-1]){
+  const source=pieceRect(sourceIndex,count),target=pieceRect(targetIndex,count);
+  const sw=source.width*1920,sh=source.height*1080,tw=target.width*640,th=target.height*360;
+  const crop=centeredCrop(sw,sh,tw,th);
+  assert.ok(crop.width>0&&crop.height>0);
+  assert.ok(crop.x>=-1e-8&&crop.y>=-1e-8);
+  assert.ok(crop.x+crop.width<=sw+1e-8&&crop.y+crop.height<=sh+1e-8);
+  assert.ok(Math.abs(crop.width/crop.height-tw/th)<1e-9);
+ }}
+ assert.equal(centeredCrop(0,1,1,1),null);
+ assert.equal(centeredCrop(1,1,Infinity,1),null);
 });
