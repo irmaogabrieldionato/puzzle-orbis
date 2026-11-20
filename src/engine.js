@@ -16,3 +16,10 @@ export function pieceAt(x,y,count){
  const inRow=Math.min(cols,count-start);
  return start+Math.min(inRow-1,Math.floor(x*inRow));
 }
+
+// Centraliza o recorte sem deformar peças de proporções diferentes.
+export function centeredCrop(sw,sh,tw,th){
+ if(![sw,sh,tw,th].every(v=>Number.isFinite(v)&&v>0))return null;
+ const ratio=Math.min(sw/tw,sh/th),width=tw*ratio,height=th*ratio;
+ return {x:(sw-width)/2,y:(sh-height)/2,width,height};
+}
