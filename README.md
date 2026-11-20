@@ -1,27 +1,39 @@
 # 🧩 Puzzle Orbis
 
-**Aplicativo multiplataforma de quebra-cabeças com imagens personalizadas (licença MIT).**
+Jogo de quebra-cabeças com imagens escolhidas pelo usuário. Este repositório contém uma implementação web inicial; **não representa um aplicativo nativo publicado**.
 
-Este é o repositório oficial de **Puzzle Orbis**. O nome do aplicativo e do repositório é Puzzle Orbis.
+## Disponível no código atual
 
-## Funcionalidades planejadas e implementadas no pacote de desenvolvimento
+- Dez níveis com 4, 8, 16, 32, 64, 108, 216, 432, 862 e 1.724 peças.
+- Carregamento de uma imagem local (até 8 MB), embaralhamento, troca de peças por dois cliques, dica visual, reinício e indicador de progresso.
+- Salvamento e restauração **local no mesmo navegador** via localStorage; não há sincronização entre aparelhos.
+- Quinze opções no seletor de idioma, **sem tradução funcional da interface**.
+- Arquivos de PWA e service worker; instalação e uso offline dependem de navegador e hospedagem compatíveis.
 
-- 10 níveis de 4 a 1.724 peças por imagem
-- 1, 2 ou 3 imagens e mistura das peças
-- cortes quadrados, retangulares, mistos e aleatórios
-- 15 idiomas, zoom, dica, jogo por toque ou arraste
-- PWA instalável em navegadores compatíveis
-- projetos-base Capacitor (Android/iOS) e Tauri (Windows/Linux/macOS)
-- autenticação Supabase preparada, ainda sem serviço ativo neste repositório
+## Ainda não implementado ou não validado
 
-> **Status:** repositório inicializado. O código integral e os arquivos de build ainda precisam ser enviados. Não considerar o jogo publicado nem o cadastro habilitado até a conclusão dessa etapa.
+- Quatro formatos selecionáveis de cortes (quadrados, retângulos, mistos e aleatórios).
+- Mistura e montagem simultânea de duas ou três imagens.
+- Tradução efetiva da interface nos quinze idiomas.
+- Cadastro/login com autenticação real por e-mail.
+- Aplicativos nativos Android, iOS, Windows e Linux: builds e testes nativos não demonstrados neste repositório.
+- Inspeção visual e testes de interação em navegadores e dispositivos reais.
 
 ## Verificação
 
-Após enviar os arquivos completos, execute `npm test` no Codespaces ou no computador. O pacote revisado inclui testes de todas as 120 combinações (10 níveis × 4 cortes × 1–3 imagens) e de integridade das traduções.
+Com Node.js instalado, execute:
 
-Consulte a aba **Issues** para acompanhar publicação, testes e melhorias.
+```sh
+npm test
+npm run build:web
+```
+
+O GitHub Actions executa os testes automatizados e a compilação web. Consulte a aba **Actions** e confira o commit associado antes de considerar um resultado aprovado. Testes de geometria e recorte não substituem testes visuais nem comprovam funcionalidades ainda ausentes.
+
+## Escopo excluído
+
+Não incluir galeria temática, desafio diário, competição, cooperativo ou sincronização entre aparelhos.
 
 ## Segurança
 
-Não colocar chaves Supabase de serviço, senhas, SMTP nem credenciais no GitHub. O aplicativo lida com imagens localmente no navegador.
+Não enviar senhas, chaves de serviço Supabase, credenciais SMTP ou outros segredos ao GitHub. Imagens e salvamentos atuais são processados localmente no navegador.
