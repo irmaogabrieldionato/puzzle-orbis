@@ -55,3 +55,6 @@ test('recortes centralizados preservam proporção nas trocas de peças',()=>{
  assert.equal(centeredCrop(0,1,1,1),null);
  assert.equal(centeredCrop(1,1,Infinity,1),null);
 });
+
+
+test('progresso nunca anuncia 100% antes da conclusão nos níveis grandes',()=>{for(const n of [862,1724]){const a=Array.from({length:n},(_,i)=>i);[a[0],a[1]]=[a[1],a[0]];assert.equal(solved(a),false);assert.equal(progress(a),99);assert.equal(progress(Array.from({length:n},(_,i)=>i)),100)}});
