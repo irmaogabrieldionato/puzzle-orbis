@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {UI,translation} from '../src/i18n.js';
-test('English and Portuguese have matching UI keys and nonempty strings',()=>{assert.deepEqual(Object.keys(UI.en).sort(),Object.keys(UI.pt).sort());for(const locale of Object.values(UI))for(const value of Object.values(locale))assert.ok(typeof value==='string'&&value.trim().length>0)});
+test('English and Portuguese have matching UI keys and nonempty strings',()=>{assert.deepEqual(Object.keys(UI.en).sort(),Object.keys(UI.pt).sort());for(const locale of Object.values(UI))for(const [key,value] of Object.entries(locale)){if(key==='levelNames'){assert.equal(value.length,10);assert.ok(value.every(name=>typeof name==='string'&&name.trim().length>0))}else assert.ok(typeof value==='string'&&value.trim().length>0)}});
 test('language selection uses English at index 0 and Portuguese at index 8',()=>{assert.equal(translation(0),UI.en);assert.equal(translation(8),UI.pt)});
+test('all ten level names are localized and differ across languages',()=>{assert.equal(UI.pt.levelNames.length,10);assert.equal(UI.en.levelNames.length,10);for(let i=0;i<10;i++)assert.notEqual(UI.en.levelNames[i],UI.pt.levelNames[i])});
