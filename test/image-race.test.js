@@ -11,7 +11,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
   const context = { clearRect(){}, drawImage(){}, strokeRect(){}, set strokeStyle(v){}, set lineWidth(v){}, set globalAlpha(v){} };
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
-      value: '0', textContent: '', files: [], add(){},
+      value: '0', textContent: '', files: [], parentElement:{firstChild:{textContent:''}}, add(){}, replaceChildren(){}, setAttribute(){},
       getContext(){return context},
       addEventListener(){},
       getBoundingClientRect(){return {left:0,top:0,width:640,height:480}},
@@ -20,7 +20,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     return elements.get(id);
   };
   try {
-    globalThis.document = {getElementById:element};
+    globalThis.document = {getElementById:element, documentElement:{lang:'pt-BR'}, querySelector(){return element('privacy')}};
     globalThis.Option = class { constructor(label,value){this.label=label;this.value=value} };
     Object.defineProperty(globalThis,'navigator',{configurable:true,writable:true,value:{}});
     globalThis.localStorage = {getItem(key){return saved.get(key) ?? null},setItem(key,value){saved.set(key,value)}};
