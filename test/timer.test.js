@@ -27,3 +27,14 @@ test('falha de armazenamento não gera falso recorde',()=>{
  assert.deepEqual(saveBest(storage,recordKey('x',0),1000),{best:null,improved:false});
  assert.equal(formatTime(125000),'02:05');
 });
+
+test('armazenamento que ignora escrita não anuncia recorde inexistente',()=>{
+ const storage={getItem(){return null},setItem(){}};
+ assert.deepEqual(saveBest(storage,recordKey('silent',0),1200),{best:null,improved:false});
+});
+test('armazenamento que falha ao confirmar escrita mantém recorde anterior',()=>{
+ const values=new Map();const key=recordKey('existing',0);values.set(key,'2500');
+ const storage={getItem(k){return values.get(k)??null},setItem(){}};
+ assert.deepEqual(saveBest(storage,key,1000),{best:2500,improved:false});
+ assert.equal(readBest(storage,key),2500);
+});
