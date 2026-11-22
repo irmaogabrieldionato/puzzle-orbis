@@ -13,7 +13,7 @@ export function createStopwatch(now=()=>performance.now()){
  };
 }
 export function recordKey(imageId,level,imageCount=1,cutMode='square'){
- if(typeof imageId!=='string'||!imageId||!Number.isInteger(level)||level<0||!Number.isInteger(imageCount)||imageCount<1||typeof cutMode!=='string'||!cutMode)throw new TypeError('Invalid puzzle identity');
+ if(typeof imageId!=='string'||!imageId||!Number.isSafeInteger(level)||level<0||!Number.isSafeInteger(imageCount)||imageCount<1||typeof cutMode!=='string'||!cutMode)throw new TypeError('Invalid puzzle identity');
  return 'puzzle-orbis-best:'+JSON.stringify([imageId,level,imageCount,cutMode]);
 }
 export function readBest(storage,key){try{const value=Number(storage.getItem(key));return Number.isSafeInteger(value)&&value>0?value:null}catch{return null}}
