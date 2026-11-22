@@ -5,6 +5,7 @@ export function createStopwatch(now=()=>performance.now()){
   start(){if(started===null&&!finished)started=now()},
   pause(){if(started!==null){elapsed+=Math.max(0,now()-started);started=null}},
   reset(){started=null;elapsed=0;finished=false},
+  restore(ms){if(!Number.isSafeInteger(ms)||ms<0)throw new TypeError('Invalid elapsed time');started=null;elapsed=ms;finished=false},
   finish(){if(!finished){this.pause();finished=true}return Math.floor(elapsed)},
   elapsed(){return Math.floor(elapsed+(started===null?0:Math.max(0,now()-started)))},
   get running(){return started!==null},
