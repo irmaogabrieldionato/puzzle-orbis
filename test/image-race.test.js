@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 test('a imagem escolhida por último prevalece mesmo se a leitura anterior terminar depois', async () => {
   const original = {};
-  for (const key of ['document','Image','FileReader','navigator','localStorage','Option','setInterval']) original[key] = Object.getOwnPropertyDescriptor(globalThis,key);
+  for (const key of ['document','Image','FileReader','navigator','localStorage','Option','setInterval','window']) original[key] = Object.getOwnPropertyDescriptor(globalThis,key);
   const elements = new Map();
   const pendingReads = [];
   const pendingImages = [];
@@ -26,6 +26,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     globalThis.Option = class { constructor(label,value){this.label=label;this.value=value} };
     Object.defineProperty(globalThis,'navigator',{configurable:true,writable:true,value:{}});
     globalThis.localStorage = {getItem(key){return saved.get(key) ?? null},setItem(key,value){saved.set(key,value)}};
+    globalThis.window = {localStorage:globalThis.localStorage};
     globalThis.FileReader = class {
       constructor(){pendingReads.push(this)}
       readAsDataURL(file){this.result=file.data}
