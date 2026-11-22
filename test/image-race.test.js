@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 test('a imagem escolhida por último prevalece mesmo se a leitura anterior terminar depois', async () => {
   const original = {};
-  for (const key of ['document','Image','FileReader','navigator','localStorage','Option']) original[key] = Object.getOwnPropertyDescriptor(globalThis,key);
+  for (const key of ['document','Image','FileReader','navigator','localStorage','Option','setInterval','window']) original[key] = Object.getOwnPropertyDescriptor(globalThis,key);
   const elements = new Map();
   const pendingReads = [];
   const pendingImages = [];
@@ -20,10 +20,13 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     return elements.get(id);
   };
   try {
+    // A UI refresh timer is irrelevant to this test; do not keep Node's event loop alive.
+    globalThis.setInterval = () => 0;
     globalThis.document = {getElementById:element, documentElement:{lang:'pt-BR'}, querySelector(){return element('privacy')}};
     globalThis.Option = class { constructor(label,value){this.label=label;this.value=value} };
     Object.defineProperty(globalThis,'navigator',{configurable:true,writable:true,value:{}});
     globalThis.localStorage = {getItem(key){return saved.get(key) ?? null},setItem(key,value){saved.set(key,value)}};
+    globalThis.window = {localStorage:globalThis.localStorage};
     globalThis.FileReader = class {
       constructor(){pendingReads.push(this)}
       readAsDataURL(file){this.result=file.data}
@@ -43,7 +46,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     pendingReads[1].onload();
     assert.equal(pendingImages.length,1);
     pendingImages[0].onload();
-    assert.match(element('status').textContent,/Concluído:/);
+    assert.match(element('status').textContent,/Progresso:/);
     const statusAfterSecond=element('status').textContent;
     pendingReads[0].onload();
     assert.equal(pendingImages.length,1,'a leitura antiga não deve iniciar uma nova imagem');
@@ -59,7 +62,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     pendingReads[3].onload();
     assert.equal(pendingImages.length,3);
     pendingImages[2].onload();
-    assert.match(element('status').textContent,/Concluído:/);
+    assert.match(element('status').textContent,/Progresso:/);
     const statusAfterFourth=element('status').textContent;
     pendingImages[1].onload();
     assert.equal(element('status').textContent,statusAfterFourth,'Image.onload antigo não deve substituir estado recente');
