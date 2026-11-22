@@ -30,3 +30,13 @@ test('tempo parado não avança e finalizar duas vezes não altera resultado',()
  assert.equal(clock.finish(),2100);
  assert.equal(clock.elapsed(),2100);
 });
+
+test('tempo restaurado retoma da marca salva sem incluir intervalo offline',()=>{
+ let now=0;const original=createStopwatch(()=>now);original.start();now=3200;
+ const saved=original.elapsed();now=90000;
+ const restored=createStopwatch(()=>now);restored.restore(saved);
+ assert.equal(restored.elapsed(),3200);
+ restored.start();now=92000;assert.equal(restored.finish(),5200);
+ assert.throws(()=>restored.restore(-1),TypeError);
+ assert.throws(()=>restored.restore(1.5),TypeError);
+});
