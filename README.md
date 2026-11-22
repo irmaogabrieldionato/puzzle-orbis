@@ -7,7 +7,8 @@ Jogo de quebra-cabeças com imagens escolhidas pelo usuário. Este repositório 
 - Dez níveis com 4, 8, 16, 32, 64, 108, 216, 432, 862 e 1.724 peças.
 - Carregamento de uma imagem local (até 8 MB), embaralhamento, troca de peças por dois cliques, dica visual, reinício e indicador de progresso.
 - Salvamento e restauração **local no mesmo navegador** via localStorage; não há sincronização entre aparelhos.
-- Quinze opções no seletor de idioma, **sem tradução funcional da interface**.
+- Quinze opções no seletor de idioma; há textos de interface em português e inglês, mas **não há tradução completa dos quinze idiomas**.
+- Cronômetro por partida com pausa, retomada, desistência, repetição e tempo final; melhor tempo pessoal armazenado somente neste navegador, separado por identidade da imagem, nível, quantidade de imagens e modalidade de corte (as duas últimas opções ainda não são selecionáveis na interface).
 - Arquivos de PWA e service worker; instalação e uso offline dependem de navegador e hospedagem compatíveis.
 
 ## Ainda não implementado ou não validado
