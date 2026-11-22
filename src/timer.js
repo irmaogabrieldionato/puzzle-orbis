@@ -21,6 +21,6 @@ export function saveBest(storage,key,elapsedMs){
  if(!Number.isSafeInteger(elapsedMs)||elapsedMs<=0)return {best:readBest(storage,key),improved:false};
  const previous=readBest(storage,key);
  if(previous!==null&&elapsedMs>=previous)return {best:previous,improved:false};
- try{storage.setItem(key,String(elapsedMs));return {best:elapsedMs,improved:true}}catch{return {best:previous,improved:false}}
+ try{storage.setItem(key,String(elapsedMs));if(readBest(storage,key)===elapsedMs)return {best:elapsedMs,improved:true};return {best:readBest(storage,key),improved:false}}catch{return {best:readBest(storage,key),improved:false}}
 }
 export function formatTime(ms){const seconds=Math.floor(Math.max(0,ms)/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')}
