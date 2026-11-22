@@ -28,3 +28,26 @@ test('desistência preserva recorde anterior e não concede recorde novo',()=>{
  if(!abandoned)saveBest(storage,key,c.finish());
  assert.equal(readBest(storage,key),4500);
 });
+
+test('restauração com elapsedMs ausente ou inválido mantém pausa/desistência',()=>{
+ const restoreSource=/clock\.restore\(Number\.isSafeInteger\(restore\.elapsedMs\)&&restore\.elapsedMs>=0\?restore\.elapsedMs:0\)/;
+ assert.match(app,restoreSource);
+ for(const elapsedMs of [undefined,-1,NaN,1.5]){
+  let now=1000;
+  const c=createStopwatch(()=>now);
+  c.start(); // a inicialização antiga inicia o relógio antes de restaurar
+  const sanitized=Number.isSafeInteger(elapsedMs)&&elapsedMs>=0?elapsedMs:0;
+  c.restore(sanitized);
+  const paused=true,abandoned=false,completed=false;
+  if(!completed&&!abandoned&&!paused)c.start();
+  now=120000;
+  assert.equal(c.running,false);
+  assert.equal(c.elapsed(),0);
+ }
+});
+test('restauração ativa com elapsedMs inválido inicia em zero e mede só tempo novo',()=>{
+ let now=1000;const c=createStopwatch(()=>now);
+ c.start();c.restore(0);c.start();now=3500;
+ assert.equal(c.elapsed(),2500);
+ c.pause();now=100000;assert.equal(c.elapsed(),2500);
+});
