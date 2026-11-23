@@ -3,3 +3,7 @@ export const UI={
   en:{levelNames:['Getting to know the image','Seeing the image','Analyzing the image','Discovering the image','Understanding the image','Coding the image','Talking about the image','Drawing the image','Creating the image','Sculpting the image'],help:'Choose an image and arrange the pieces.',image:'Image',level:'Level',language:'Language',shuffle:'Shuffle',hint:'Hint',reset:'Restart',save:'Save on this device',replay:'Play again',pause:'Pause',resume:'Resume',abandon:'Give up',abandoned:'Game abandoned.',elapsed:'Time',best:'Best time',waiting:'Waiting for an image.',board:'Puzzle board',privacy:'Data stays in this browser. There is no cross-device synchronization.',completed:'Completed',progress:'Progress',moves:'Moves',congrats:'Congratulations! 🎉',finalTime:'Final time',newRecord:'New personal best!',cuts:'pieces',invalidDimensions:'Image has invalid dimensions.',openError:'Could not open the image.',invalidImage:'Select a valid image.',tooLarge:'Image too large (maximum 8 MB).',readError:'Could not read the image.',chooseFirst:'Choose an image first.',saved:'Saved in this browser.',noSpace:'Not enough storage. Try a smaller image.'}
 };
 export function translation(index){return index===0?UI.en:UI.pt;}
+
+// BCP 47 tags follow the language selector order; untranslated strings still use the existing fallback.
+export const LANGUAGE_TAGS=['en','zh','hi','es','fr','ar','bn','ru','pt-BR','id','ur','de','ja','sw','mr'];
+export function languageTag(index){return LANGUAGE_TAGS[index]??'pt-BR';}
