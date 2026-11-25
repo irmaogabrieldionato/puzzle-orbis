@@ -3,6 +3,7 @@ set -euo pipefail
 target=native/linux-package
 mkdir -p "$target/DEBIAN" "$target/opt" "$target/usr/bin" "$target/usr/share/applications" "$target/usr/share/icons/hicolor/512x512/apps"
 cp -a native/dist/puzzle-orbis-linux-x64 "$target/opt/puzzle-orbis"
+find "$target" -type d -exec chmod 0755 {} +
 chmod 4755 "$target/opt/puzzle-orbis/chrome-sandbox"
 ln -s /opt/puzzle-orbis/puzzle-orbis "$target/usr/bin/puzzle-orbis"
 cp icons/icon-512.png "$target/usr/share/icons/hicolor/512x512/apps/puzzle-orbis.png"
