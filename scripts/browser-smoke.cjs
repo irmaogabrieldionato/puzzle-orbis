@@ -343,8 +343,18 @@ for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/locales.js','
 networkAvailable=false;
 await tab.reload();
 assert.ok(await tab.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
+const offlineErrors=[];
+tab.on('pageerror',error=>offlineErrors.push(error.message));
+tab.on('requestfailed',request=>offlineErrors.push(request.url()+' '+request.failure()?.errorText));
+// Wait for the module to bind the upload handler, not merely for static HTML.
+await tab.waitForFunction(()=>typeof document.querySelector('#file')?.onchange==='function');
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
-await tab.waitForFunction(()=>!document.querySelector('#pause').disabled);
+try {
+ await tab.waitForFunction(()=>!document.querySelector('#pause').disabled);
+} catch(error) {
+ console.error('Offline upload diagnostics:',await tab.locator('#status').textContent(),offlineErrors);
+ throw error;
+}
 await tab.goto(url+'multi.html');
 await tab.waitForFunction(()=>document.querySelector('#multi-level').options.length===10);
 console.log('PASS: first-visit offline reload, image upload and multi-image mode');

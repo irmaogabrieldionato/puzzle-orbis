@@ -1,6 +1,7 @@
 import {authSettings} from './auth-config.js';
 import {direction,languageTag,savedLocale} from './i18n.js';
 import {accountLocale} from './account-locales.js';
+import {accountOutcome} from './account-outcome.js';
 
 const $=id=>document.getElementById(id);
 let locale;
@@ -60,15 +61,15 @@ async function start(){
  submit('sign-up',async form=>{
   const name=String(form.get('name')).trim();
   if(!name){report('enterName');return;}
-  const {error,data}=await client.auth.signUp({
+  const result=await client.auth.signUp({
    email:String(form.get('email')).trim(),password:String(form.get('password')),
    options:{emailRedirectTo:config.redirect,data:{display_name:name}}
   });
-  report(!error&&data.session?'connected':'confirm');
+  report(accountOutcome('signup',result));
  });
  submit('request-reset',async form=>{
-  await client.auth.resetPasswordForEmail(String(form.get('email')).trim(),{redirectTo:config.redirect});
-  report('reset');
+  const result=await client.auth.resetPasswordForEmail(String(form.get('email')).trim(),{redirectTo:config.redirect});
+  report(accountOutcome('reset',result));
  });
  submit('new-password',async form=>{
   if(!recovering)return;
