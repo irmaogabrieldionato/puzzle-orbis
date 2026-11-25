@@ -81,6 +81,53 @@ for(const mode of ['mixed','random']){
  assert.match(await page.locator('#status').textContent(),/Novo recorde/);
  console.log('PASS: touch playthrough, save compatibility and isolated record in '+mode);
 }
+await page.goto(url+'multi.html');
+await page.locator('#image-count').selectOption('3');
+const images=['<rect width="60" height="60" fill="red"/><rect x="60" width="60" height="60" fill="orange"/>','<rect width="120" height="60" fill="green"/>','<rect width="120" height="60" fill="blue"/>'];
+const multiFile=(i)=>({name:'tabuleiro'+i+'.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="60">'+images[i]+'</svg>')});
+for(let i=0;i<3;i++)await page.locator('#image-'+(i+1)).setInputFiles(multiFile(i));
+await page.locator('#start').click();
+await page.waitForFunction(()=>document.querySelectorAll('#boards canvas').length===3);
+const spaces=[[0,.25],[0,.75],[1,.5],[2,.5]];
+const canvases=page.locator('#boards canvas');
+const colors=['255,0,0','255,165,0','0,128,0','0,0,255'];
+const readArrangement=async()=>Promise.all(spaces.map(([board,x])=>canvases.nth(board).evaluate((c,b)=>[...c.getContext('2d').getImageData(Math.floor(c.width*b),Math.floor(c.height*.5),1,1).data].slice(0,3).join(','),x)));
+const tapSpace=async (i)=>{
+ const [board,x]=spaces[i], canvas=canvases.nth(board);
+ await canvas.scrollIntoViewIfNeeded();
+ const box=await canvas.boundingBox();
+ await page.touchscreen.tap(box.x+box.width*x,box.y+box.height*.5);
+};
+const shuffled=await readArrangement();
+assert.ok(shuffled[0]!==colors[0]||shuffled[1]!==colors[1]);
+await page.locator('#multi-pause').click();
+await page.locator('#multi-save').click();
+await page.waitForFunction(()=>document.querySelector('#multi-status').textContent.includes('Partida salva'));
+await page.reload();
+await page.locator('#multi-load').click();
+await page.waitForFunction(()=>document.querySelectorAll('#boards canvas').length===3);
+assert.deepEqual(await readArrangement(),shuffled);
+assert.equal(await page.locator('#multi-pause').textContent(),'Continuar');
+await page.locator('#multi-pause').click();
+let multiMoves=0;
+for(let i=0;i<4;i++){
+ const placement=await readArrangement();
+ if(placement[i]===colors[i])continue;
+ const from=placement.indexOf(colors[i]);
+ assert.ok(from>=0);
+ await tapSpace(i);await tapSpace(from);
+ multiMoves++;
+}
+assert.deepEqual(await readArrangement(),colors);
+assert.match(await page.locator('#multi-status').textContent(),new RegExp('Concluído: 100%.*Movimentos: '+multiMoves));
+assert.ok(await page.locator('#multi-pause').isDisabled());
+await page.locator('#image-count').selectOption('2');
+await page.locator('#count-policy').selectOption('per-image');
+for(let i=0;i<2;i++)await page.locator('#image-'+(i+1)).setInputFiles(multiFile(i));
+await page.locator('#start').click();
+await page.waitForFunction(()=>document.querySelectorAll('#boards canvas').length===2);
+assert.equal(await page.locator('#count-policy').inputValue(),'per-image');
+console.log('PASS: 3-image cross-board touch, IndexedDB reload, completion and 2-image setup');
 await context.close();
 {
 const offline=await browser.newContext();
@@ -94,7 +141,9 @@ await offline.setOffline(true);
 await tab.reload();
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
 await tab.waitForFunction(()=>!document.querySelector('#pause').disabled);
-console.log('PASS: first-visit offline reload and image upload');
+await tab.goto(url+'multi.html');
+await tab.waitForFunction(()=>document.querySelector('#multi-level').options.length===10);
+console.log('PASS: first-visit offline reload, image upload and multi-image mode');
 }
 }finally{await browser?.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
