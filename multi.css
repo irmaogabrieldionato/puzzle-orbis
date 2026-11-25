@@ -21,7 +21,7 @@ a{color:var(--purple-dark);font-weight:800;text-underline-offset:.18em}
  box-shadow:0 7px 0 #d9c3f2,0 14px 28px #72509b15;margin-block-end:1.5rem
 }
 .hero p{color:var(--muted);font-weight:650;margin:.55rem 0 .8rem;max-width:46ch}
-.hero-art{display:block;width:100%;max-height:168px;object-fit:contain}
+.hero-art{display:block;width:100%;height:auto;max-height:168px}
 .hero-kicker{display:inline-block;margin-block-end:.5rem;padding:.3rem .72rem;border-radius:999px;background:#fff8d9;color:#3e2a64;font-size:.84rem;font-weight:900;letter-spacing:.06em}
 .nav-pill{display:inline-flex;align-items:center;gap:.35em;min-height:44px;width:fit-content;max-width:100%;padding:.44rem .85rem;border:1.5px solid #a779e0;border-radius:999px;background:#fff;color:var(--purple-dark);text-decoration:none;overflow-wrap:anywhere}
 .nav-pill:hover{background:var(--wash)}

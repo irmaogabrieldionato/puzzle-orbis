@@ -5,7 +5,7 @@ const { createServer } = require('node:http');
 const { readFile } = require('node:fs/promises');
 const { resolve, extname, sep } = require('node:path');
 const root = resolve(__dirname, '../www');
-const types = {'.html':'text/html','.js':'text/javascript','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.css':'text/css'};
+const types = {'.html':'text/html','.js':'text/javascript','.webmanifest':'application/manifest+json','.png':'image/png','.css':'text/css'};
 let networkAvailable=true;
 const server = createServer(async (req, res) => {
   if(!networkAvailable){req.socket.destroy();return;}
@@ -28,7 +28,7 @@ const context=await browser.newContext({viewport:{width:390,height:844},hasTouch
 const page=await context.newPage();
 const url='http://127.0.0.1:'+server.address().port+'/';
 await page.goto(url);
-await page.locator('.hero-art').evaluate(img=>img.decode());
+assert.ok(await page.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
 const mobileLayout = await page.evaluate(() => ({
   viewport: document.documentElement.clientWidth,
   page: document.documentElement.scrollWidth,
@@ -40,7 +40,7 @@ assert.ok(mobileLayout.radius >= 22 && mobileLayout.button >= 44,'Rounded hero a
 if(process.env.PUZZLE_SCREENSHOT) {
  const desktop=await browser.newPage({viewport:{width:1280,height:900}});
  await desktop.goto(url);
- await desktop.locator('.hero-art').evaluate(img=>img.decode());
+ assert.ok(await desktop.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
  await desktop.screenshot({path:'puzzle-orbis-cartoon-desktop.png',fullPage:true});
  await desktop.close();
 }
@@ -304,10 +304,10 @@ for(const icon of manifest.icons){
 }
 const files=await tab.evaluate(async()=>{const result=[];for(const s of await caches.keys())for(const r of await (await caches.open(s)).keys())result.push(new URL(r.url).pathname);return result;});
 // The first visit itself loaded modules before the worker controlled the page.
-for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/locales.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png','/icons/orbit-mascot.svg'])assert.ok(files.includes(p),p+' was not cached on the first visit');
+for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/locales.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
 networkAvailable=false;
 await tab.reload();
-await tab.locator('.hero-art').evaluate(img=>img.decode());
+assert.ok(await tab.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
 await tab.waitForFunction(()=>!document.querySelector('#pause').disabled);
 await tab.goto(url+'multi.html');

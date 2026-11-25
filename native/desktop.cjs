@@ -32,7 +32,7 @@ app.whenReady().then(async()=>{
   if(!permit(request.url)||request.method!=='GET')return new Response(null,{status:403});
   const path=new URL(request.url).pathname;
   const asset=path==='/'?'index.html':path.slice(1);
-  if(!/^(?:index\.html|multi\.(?:html|css)|sw\.js|manifest\.webmanifest|src\/[a-z0-9-]+\.js|icons\/[a-z0-9-]+\.png|icons\/orbit-mascot\.svg)$/.test(asset))return new Response(null,{status:404});
+  if(!/^(?:index\.html|multi\.(?:html|css)|sw\.js|manifest\.webmanifest|src\/[a-z0-9-]+\.js|icons\/[a-z0-9-]+\.png)$/.test(asset))return new Response(null,{status:404});
   try{return await net.fetch(pathToFileURL(resolve(www,asset)).toString());}
   catch{return new Response(null,{status:404});}
  });
@@ -42,7 +42,7 @@ app.whenReady().then(async()=>{
   const timeout=setTimeout(()=>app.exit(1),15000);
   try{
    const levels=await win.webContents.executeJavaScript("document.querySelector('#level')?.options.length");
-   const image=await win.webContents.executeJavaScript("document.querySelector('.hero-art').decode().then(()=>document.querySelector('.hero-art').naturalWidth)");
+   const image=await win.webContents.executeJavaScript("document.querySelector('.hero-art')?.getBBox().width");
    if(!image)throw Error('Expected illustrated hero to load');
    if(levels!==10)throw Error('Expected ten single-image levels');
    await win.loadURL(local+'/multi.html');
