@@ -7,7 +7,8 @@ import {ACCOUNT_KEYS,accountLocale} from '../src/account-locales.js';
 test('account localizes every UI and status key in the 15 supported languages',()=>{
  for(const tag of LANGUAGE_TAGS){
   const strings=accountLocale(tag);
-  assert.equal(Object.keys(strings).length,27);
+  assert.deepEqual(Object.keys(strings).sort(), [...ACCOUNT_KEYS].sort());
+  assert.ok(strings.retryLater?.trim(), tag+' missing throttling message');
   assert.ok(ACCOUNT_KEYS.every(key=>strings[key]?.trim()));
   if(tag!=='pt-BR')assert.notEqual(strings.unavailable,accountLocale('pt-BR').unavailable);
  }
