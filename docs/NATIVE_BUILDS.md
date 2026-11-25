@@ -6,7 +6,7 @@ O workflow **Pacotes de teste Puzzle Orbis** compila a revisão selecionada e di
 | Windows x64 | ZIP portátil | Executa o binário e confirma abertura das telas de uma e várias imagens |
 | Linux x64 | pacote DEB | Instala o DEB e abre as duas telas com o sandbox ativo em Xvfb |
 | Android | APK de depuração e AAB release sem chave de produção | Compilação; o APK serve para testar em dispositivo aprovado |
-| iOS | ZIP com App.app para simulador | Compilação sem assinatura; serve para simulador, não para iPhone |
+| iOS | ZIP com App.app para simulador | Compilação com Xcode 26.3 e execução de abertura no simulador iOS 26; não instala em iPhone |
 
 O ZIP do Windows e o DEB de testes não têm assinatura de produção. O APK de depuração não deve ser enviado à loja. O pacote de simulador iOS não é um IPA. Teste o seletor de arquivos, save, idioma e jogo completo em hardware antes de publicar.
 
