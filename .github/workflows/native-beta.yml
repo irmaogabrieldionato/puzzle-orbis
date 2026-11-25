@@ -96,11 +96,19 @@ jobs:
   ios:
     runs-on: macos-15
     timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify selected Xcode and iOS SDK
+        run: |
+          test -d "$DEVELOPER_DIR"
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version | grep -E '^26\.'
+          xcrun --sdk iphonesimulator --show-sdk-version | grep -E '^26\.'
       - run: npm ci --prefix native
       - run: npm run build:web
       - run: cp -r www native/www
@@ -117,6 +125,8 @@ jobs:
         working-directory: native
       - name: Build for iOS simulator (no signing)
         run: xcodebuild -project native/ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -derivedDataPath native/ios-build build
+      - name: Install and launch on an iOS 26 simulator
+        run: bash native/smoke-ios.sh native/ios-build/Build/Products/Debug-iphonesimulator/App.app
       - run: ditto -c -k --keepParent native/ios-build/Build/Products/Debug-iphonesimulator/App.app puzzle-orbis-ios-simulator.zip
       - uses: actions/upload-artifact@v4
         with:
