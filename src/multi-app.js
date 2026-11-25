@@ -1,3 +1,4 @@
+import {positionMessage,updateFeedback} from './board-feedback.js';
 import {privacyCopy,bindSaveDeletion,deleteMulti} from './save-privacy.js';
 import {translation,languageTag,direction,savedLocale,saveLocale} from './i18n.js';
 import {CUTS,LANGUAGES,canvasSize,containedFit,pieceRect,solved,isBoardArrow,nextBoardSlot} from './engine.js';
@@ -37,7 +38,7 @@ function applyLanguage(){
  for(const [i,n] of CUTS.entries())level.add(new Option((i+1)+'. '+t('levelNames')[i]+' · '+n+' '+t('cuts'),i));
  if(prev)level.value=prev;
  controls();
- if(state)draw();else status(t('waiting'));
+ if(state){draw();announceBoard(boards.find(b=>b.canvas===document.activeElement));}else status(t('waiting'));
 }
 lang.onchange=()=>{saveLocale(storage,Number(lang.value));applyLanguage();};
 $('image-count').onchange=()=>{
@@ -46,7 +47,8 @@ $('image-count').onchange=()=>{
  fileInputs[2].disabled=!three;
  fileInputs[2].required=three;
 };
-function status(message){$('multi-status').textContent=message;}
+function status(message){updateFeedback($('multi-status'),message);}
+function announceBoard(board){updateFeedback($('board-feedback'),positionMessage(Number(lang.value),board?.cursor==null?null:{slot:board.cursor,count:board.slots.length},selection===null?null:origins[selection]));}
 function controls(){
  $('multi-pause').disabled=!state||completed;
  $('multi-restart').disabled=!state;
@@ -82,7 +84,7 @@ function activate(decoded,blobs,next,mode,snapshot){
  const slots=boardSlots(counts);
  state=next;sourceImages=blobs;cut=mode;selection=null;completed=solved(state.pieces);newRecord=false;origins=slots.flat();
  const views=$('boards');
- views.replaceChildren();
+ views.replaceChildren();announceBoard();
  boards=decoded.map(({img,id},i)=>{
   const section=document.createElement('section'), title=document.createElement('h2'), canvas=document.createElement('canvas');
   const size=canvasSize(img.naturalWidth,img.naturalHeight,600,1200);
@@ -96,17 +98,21 @@ function activate(decoded,blobs,next,mode,snapshot){
   canvas.addEventListener('click',event=>{
    const r=canvas.getBoundingClientRect();
    const i=layoutPieceAt(regions,(event.clientX-r.left)/r.width,(event.clientY-r.top)/r.height);
-   if(i>=0)choose(board.slots[i].id);
+   if(i>=0){board.cursor=null;announceBoard();choose(board.slots[i].id);}
+  });
+  canvas.addEventListener('focus',()=>{
+   if(completed||!clock.running)return;
+   board.cursor??=0;draw();announceBoard(board);
   });
   canvas.addEventListener('keydown',event=>{
-   if(!isBoardArrow(event.key)&&event.key!=='Enter'&&event.key!==' ')return;
+   if(completed||!clock.running||(!isBoardArrow(event.key)&&event.key!=='Enter'&&event.key!==' '))return;
    event.preventDefault();
    board.cursor??=0;
    if(isBoardArrow(event.key))board.cursor=nextBoardSlot(board.cursor,regions.length,i=>regions[i],event.key);
    else choose(board.slots[board.cursor].id);
-   draw();
+   draw();announceBoard(board);
   });
-  canvas.addEventListener('blur',()=>{board.cursor=null;draw();});
+  canvas.addEventListener('blur',()=>{if(board.cursor!==null){board.cursor=null;draw();announceBoard();}});
   return board;
  });
  key=recordKey(JSON.stringify(boards.map(b=>b.id)),next.level,next.imageCount,mode+':'+next.policy);
@@ -119,7 +125,7 @@ function activate(decoded,blobs,next,mode,snapshot){
 function restart(){
  if(!state)return;
  state={...state,pieces:[...state.initialPieces],moves:0};
- selection=null;completed=false;newRecord=false;clock.reset();clock.start();
+ selection=null;completed=false;newRecord=false;clock.reset();clock.start();announceBoard();
  controls();time();draw();
 }
 function choose(id){
