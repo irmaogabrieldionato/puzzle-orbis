@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#172554"><title>Puzzle Orbis · Imagens misturadas</title><link rel="stylesheet" href="multi.css"></head>
+<body><main>
+<a href="./">Voltar a uma imagem</a>
+<h1>Imagens misturadas</h1>
+<p>Toque em duas peças para trocá-las, inclusive entre tabuleiros. Complete todos os tabuleiros para registrar o tempo.</p>
+<form id="setup">
+ <div class="controls">
+ <label>Imagens <select id="image-count"><option>2</option><option>3</option></select></label>
+ <label>Nível <select id="multi-level"></select></label>
+ <label>Contagem <select id="count-policy"><option value="total">Peças no total</option><option value="per-image">Peças por imagem</option></select></label>
+ <label>Cortes <select id="multi-cut"><option value="square">Grade quadrada</option><option value="rectangular">Retangulares</option><option value="mixed">Mistos</option><option value="random">Aleatórios</option></select></label>
+ </div>
+ <div class="controls" id="inputs">
+ <label>Imagem 1 <input id="image-1" type="file" accept="image/*" required></label>
+ <label>Imagem 2 <input id="image-2" type="file" accept="image/*" required></label>
+ <label id="upload-third" hidden>Imagem 3 <input id="image-3" type="file" accept="image/*" disabled></label>
+ </div>
+ <button id="start" type="submit">Começar</button>
+</form>
+<div class="controls">
+ <button id="multi-pause" disabled>Pausar</button><button id="multi-restart" disabled>Reiniciar</button><button id="multi-save" disabled>Salvar neste navegador</button><button id="multi-load">Carregar partida salva</button>
+</div>
+<p>Tempo: <strong id="multi-time">00:00</strong> · Melhor tempo: <strong id="multi-best">--:--</strong></p>
+<p id="multi-status" role="status">Escolha as imagens para começar.</p>
+<div id="boards"></div>
+<p class="muted">Até 8 MB por imagem. As imagens, a partida salva e os recordes ficam neste navegador.</p>
+</main><script type="module" src="./src/multi-app.js"></script></body>
+</html>

@@ -1,1 +1,1 @@
-import {mkdir,cp} from 'node:fs/promises';await mkdir('www',{recursive:true});for(const f of ['index.html','manifest.webmanifest','sw.js'])await cp(f,'www/'+f);await cp('src','www/src',{recursive:true});console.log('Web build: www/');
+import {mkdir,cp} from 'node:fs/promises';await mkdir('www',{recursive:true});for(const f of ['index.html','multi.html','multi.css','manifest.webmanifest','sw.js'])await cp(f,'www/'+f);await cp('src','www/src',{recursive:true});console.log('Web build: www/');
