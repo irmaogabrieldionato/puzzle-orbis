@@ -30,15 +30,17 @@ jobs:
       - run: node -e "require('node:fs').cpSync('www','native/www',{recursive:true})"
       - run: node native/package-desktop.mjs
       - if: runner.os == 'Linux'
-        run: timeout 60s xvfb-run -a native/dist/puzzle-orbis-linux-x64/puzzle-orbis --orbis-smoke
+        run: |
+          bash native/package-linux-deb.sh
+          sudo dpkg -i puzzle-orbis-linux-x64-beta.deb
+          test "$(stat -c '%U:%a' /opt/puzzle-orbis/chrome-sandbox)" = 'root:4755'
+          timeout 60s xvfb-run -a /usr/bin/puzzle-orbis --orbis-smoke
       - if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $app = Start-Process -FilePath 'native/dist/puzzle-orbis-win32-x64/puzzle-orbis.exe' -ArgumentList '--orbis-smoke' -PassThru
           if (!$app.WaitForExit(60000)) { $app.Kill(); throw 'Puzzle Orbis did not finish' }
           if ($app.ExitCode -ne 0) { throw "Puzzle Orbis failed ($($app.ExitCode))" }
-      - if: runner.os == 'Linux'
-        run: tar -czf puzzle-orbis-linux-x64-beta.tar.gz -C native/dist puzzle-orbis-linux-x64
       - if: runner.os == 'Windows'
         shell: pwsh
         run: Compress-Archive -Path 'native/dist/puzzle-orbis-win32-x64' -DestinationPath 'puzzle-orbis-win32-x64-beta.zip'

@@ -4,11 +4,11 @@ O workflow **Pacotes de teste Puzzle Orbis** compila a revisão selecionada e di
 | Sistema | Artefato | Tipo de validação |
 | --- | --- | --- |
 | Windows x64 | ZIP portátil | Executa o binário e confirma abertura das telas de uma e várias imagens |
-| Linux x64 | TAR.GZ portátil | Executa o binário e confirma abertura das duas telas com Xvfb |
+| Linux x64 | pacote DEB | Instala o DEB e abre as duas telas com o sandbox ativo em Xvfb |
 | Android | APK de depuração e AAB release sem chave de produção | Compilação; o APK serve para testar em dispositivo aprovado |
 | iOS | ZIP com App.app para simulador | Compilação sem assinatura; serve para simulador, não para iPhone |
 
-Os binários portáteis não são instaladores assinados. O APK de depuração não deve ser enviado à loja. O pacote de simulador iOS não é um IPA. Teste o seletor de arquivos, save, idioma e jogo completo em hardware antes de publicar.
+O ZIP do Windows e o DEB de testes não têm assinatura de produção. O APK de depuração não deve ser enviado à loja. O pacote de simulador iOS não é um IPA. Teste o seletor de arquivos, save, idioma e jogo completo em hardware antes de publicar.
 
 ## Repetir localmente
 Use Node 22 ou posterior, execute `npm ci --prefix native` e `npm run build:web`, copie `www` para `native/www` e siga o workflow. As pastas nativas são geradas a partir de dependências fixadas, não do navegador hospedado. Não é preciso provisionar servidor para testar o jogo local.
