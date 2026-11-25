@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CUTS} from '../src/engine.js';
-import {boardCounts,boardSlots,createMulti,swapMulti,multiProgress,isMultiSnapshot} from '../src/multi-engine.js';
+import {boardCounts,boardSlots,createMulti,swapMulti,multiProgress,compatibleBoardSlots,ensureUnsolvedMulti,isMultiSnapshot} from '../src/multi-engine.js';
 
 test('distribui os dez níveis pelos dois critérios sem alterar a contagem',()=>{
  for(const [level,n] of CUTS.entries())for(const k of [2,3]){
@@ -43,4 +43,28 @@ test('accepts the browser-portable bytes format without dropping v1 Blob support
  assert.equal(isMultiSnapshot(structuredClone(state)),true);
  assert.equal(isMultiSnapshot({...state,version:1}),false);
  assert.equal(isMultiSnapshot({...state,images:[{bytes:new ArrayBuffer(0),type:'image/png'},images[1]]}),false);
+});
+
+test('recognizes both correctly assembled images even when their boards are swapped',()=>{
+ // 16 total across three boards gives 6/5/5. The old check reports 38/100 here.
+ const counts=[6,5,5];
+ const swapped=[0,1,2,3,4,5,11,12,13,14,15,6,7,8,9,10];
+ const compatible=[[true,false,false],[false,true,true],[false,true,true]];
+ assert.deepEqual(multiProgress(swapped,counts,compatible),{byBoard:[100,100,100],total:100,complete:true});
+ const almost=[...swapped];[almost[6],almost[7]]=[almost[7],almost[6]];
+ assert.deepEqual(multiProgress(almost,counts,compatible),{byBoard:[100,60,100],total:88,complete:false});
+ assert.deepEqual(multiProgress(swapped,counts,[[true,false,false],[false,true,false],[false,false,true]]),
+  {byBoard:[100,0,0],total:38,complete:false});
+});
+
+test('matches normalized cut geometry and repairs a starting shuffle that already looks solved',()=>{
+ const left={x:0,y:0,width:.5,height:1},right={x:.5,y:0,width:.5,height:1};
+ const top={x:0,y:0,width:1,height:.5},bottom={x:0,y:.5,width:1,height:.5};
+ const matrix=compatibleBoardSlots([[left,right],[{...left},{...right}],[top,bottom]]);
+ assert.deepEqual(matrix,[[true,true,false],[true,true,false],[false,false,true]]);
+ const pieces=[2,3,0,1,4,5];
+ assert.equal(multiProgress(pieces,[2,2,2],matrix).complete,true);
+ const initial=ensureUnsolvedMulti(pieces,[2,2,2],matrix);
+ assert.deepEqual(initial,[3,2,0,1,4,5]);
+ assert.equal(multiProgress(initial,[2,2,2],matrix).complete,false);
 });

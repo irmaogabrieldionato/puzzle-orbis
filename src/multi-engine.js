@@ -21,16 +21,51 @@ export function boardSlots(counts) {
  let global=0;
  return counts.map((n,board)=>Array.from({length:n},(_,slot)=>({board,slot,id:global++})));
 }
-export function multiProgress(pieces,counts) {
- let base=0;
- let correct=0;
- const byBoard=counts.map(n=>{
-  let boardCorrect=0;
-  for(let i=base;i<base+n;i++)if(pieces[i]===i){correct++;boardCorrect++;}
-  base+=n;
-  return boardCorrect===n?100:Math.min(99,Math.round(100*boardCorrect/n));
- });
- return {byBoard,total:correct===base?100:Math.min(99,Math.round(100*correct/base)),complete:correct===base&&solved(pieces)};
+const rectKeys=['x','y','width','height'];
+export function compatibleBoardSlots(regions) {
+ return regions.map((target,t)=>regions.map((source,s)=>t===s||(target.length===source.length&&
+  target.every((rect,i)=>rectKeys.every(k=>Math.abs(rect[k]-source[i][k])<1e-9)))));
+}
+export function multiProgress(pieces,counts,compatible) {
+ const offsets=[];
+ let totalPieces=0;
+ for(const n of counts){offsets.push(totalPieces);totalPieces+=n;}
+ // Each board can depict one whole source image. Match it at most once, using
+ // the same slot geometry, and choose the assignment with the most correct slots.
+ const scores=counts.map((n,target)=>counts.map((m,source)=>{
+  if(n!==m||(target!==source&&!compatible?.[target]?.[source]))return -1;
+  let score=0;
+  for(let i=0;i<n;i++)if(pieces[offsets[target]+i]===offsets[source]+i)score++;
+  return score;
+ }));
+ let best=-1, matches=[];
+ function assign(target,used,score,byBoard){
+  if(target===counts.length){
+   if(score>best){best=score;matches=[...byBoard];}
+   return;
+  }
+  for(let source=0;source<counts.length;source++){
+   if((used&(1<<source))||scores[target][source]<0)continue;
+   byBoard.push(scores[target][source]);
+   assign(target+1,used|(1<<source),score+scores[target][source],byBoard);
+   byBoard.pop();
+  }
+ }
+ assign(0,0,0,[]);
+ const percent=(n,outOf)=>n===outOf?100:Math.min(99,Math.round(100*n/outOf));
+ const complete=totalPieces>0&&best===totalPieces&&pieces.length===totalPieces;
+ return {byBoard:matches.map((n,i)=>percent(n,counts[i])),total:totalPieces?percent(best,totalPieces):0,complete};
+}
+export function ensureUnsolvedMulti(pieces,counts,compatible) {
+ if(!multiProgress(pieces,counts,compatible).complete)return pieces;
+ // At least one board in a valid game has two slots. An internal swap creates
+ // a genuine puzzle, not just a different mapping of whole images.
+ let offset=0;
+ for(const count of counts){
+  if(count>=2)return swap(pieces,offset,offset+1);
+  offset+=count;
+ }
+ return pieces;
 }
 export function swapMulti(state,first,second) {
  const n=state.pieces.length;

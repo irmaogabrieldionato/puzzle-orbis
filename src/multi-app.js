@@ -1,10 +1,10 @@
 import {positionMessage,updateFeedback} from './board-feedback.js';
 import {privacyCopy,bindSaveDeletion,deleteMulti} from './save-privacy.js';
 import {translation,languageTag,direction,savedLocale,saveLocale} from './i18n.js';
-import {CUTS,LANGUAGES,canvasSize,containedFit,pieceRect,solved,isBoardArrow,nextBoardSlot} from './engine.js';
+import {CUTS,LANGUAGES,canvasSize,containedFit,pieceRect,isBoardArrow,nextBoardSlot} from './engine.js';
 import {rectangularPieceRect} from './rectangular.js';
 import {layoutPieceAt,variableLayout} from './variable-cuts.js';
-import {boardCounts,boardSlots,createMulti,swapMulti,multiProgress,isMultiSnapshot} from './multi-engine.js';
+import {boardCounts,boardSlots,createMulti,swapMulti,multiProgress,compatibleBoardSlots,ensureUnsolvedMulti,isMultiSnapshot} from './multi-engine.js';
 import {readMulti,saveMulti} from './multi-store.js';
 import {createStopwatch,formatTime,recordKey,readBest,saveBest} from './timer.js';
 
@@ -17,7 +17,7 @@ const storage={
 const fileInputs=[1,2,3].map(i=>$('image-'+i));
 const cuts=['square','rectangular','mixed','random'];
 let state=null,boards=[],origins=[],selection=null,cut='square',sourceImages=[],key=null,generation=0;
-let completed=false,newRecord=false,saving=false,restoreRequest=0;
+let completionMatrix=[],completed=false,newRecord=false,saving=false,restoreRequest=0;
 const lang=$('multi-language');
 const t=k=>translation(Number(lang.value))[k];
 LANGUAGES.forEach((name,i)=>lang.add(new Option(name,i)));
@@ -82,7 +82,7 @@ async function decode(blob){
 function activate(decoded,blobs,next,mode,snapshot){
  const counts=boardCounts(next.level,next.imageCount,next.policy);
  const slots=boardSlots(counts);
- state=next;sourceImages=blobs;cut=mode;selection=null;completed=solved(state.pieces);newRecord=false;origins=slots.flat();
+ state=next;sourceImages=blobs;cut=mode;selection=null;completed=false;newRecord=false;origins=slots.flat();
  const views=$('boards');
  views.replaceChildren();announceBoard();
  boards=decoded.map(({img,id},i)=>{
@@ -115,6 +115,10 @@ function activate(decoded,blobs,next,mode,snapshot){
   canvas.addEventListener('blur',()=>{if(board.cursor!==null){board.cursor=null;draw();announceBoard();}});
   return board;
  });
+ completionMatrix=compatibleBoardSlots(boards.map(b=>b.regions));
+ const initialPieces=ensureUnsolvedMulti(state.initialPieces,counts,completionMatrix);
+ state={...state,initialPieces,pieces:snapshot?state.pieces:[...initialPieces]};
+ completed=multiProgress(state.pieces,counts,completionMatrix).complete;
  key=recordKey(JSON.stringify(boards.map(b=>b.id)),next.level,next.imageCount,mode+':'+next.policy);
  clock.reset();
  if(snapshot)clock.restore(snapshot.elapsedMs);
@@ -140,7 +144,13 @@ function choose(id){
 }
 function draw(){
  if(!state)return;
- const stats=multiProgress(state.pieces,boards.map(b=>b.slots.length));
+ const stats=multiProgress(state.pieces,boards.map(b=>b.slots.length),completionMatrix);
+ if(!completed&&stats.complete){
+  completed=true;
+  const duration=clock.finish();
+  newRecord=duration>0&&saveBest(storage,key,duration).improved;
+  time();controls();
+ }
  for(const [i,b] of boards.entries()){
   b.title.textContent=t('image')+' '+(i+1)+' · '+stats.byBoard[i]+'%';
   b.canvas.setAttribute('aria-label',t('board')+' '+(i+1)+' · ↑ ↓ ← → · Enter');
@@ -157,12 +167,6 @@ function draw(){
    ctx.lineWidth=active||focus?4:1;
    ctx.strokeRect(a.x*canvas.width,a.y*canvas.height,tw,th);
   }
- }
- if(!completed&&stats.complete){
-  completed=true;
-  const duration=clock.finish();
-  newRecord=duration>0&&saveBest(storage,key,duration).improved;
-  time();controls();
  }
  status(t(completed?'completed':'progress')+': '+stats.total+'% · '+t('moves')+': '+state.moves+(newRecord?' · '+t('newRecord'):''));
 }
