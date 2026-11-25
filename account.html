@@ -1,16 +1,16 @@
 <!doctype html>
 <html lang="pt-BR">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https://*.supabase.co; form-action 'none'; base-uri 'none'"><title>Puzzle Orbis · Conta</title><link rel="stylesheet" href="multi.css"></head>
-<body><main>
-<a href="./" data-account-text="back">Voltar ao jogo</a>
+<body class="account"><main>
+<header class="hero"><div><span class="hero-kicker">Puzzle Orbis</span><a class="nav-pill" href="./" data-account-text="back">Voltar ao jogo</a>
 <h1 data-account-text="account">Conta Puzzle Orbis</h1>
-<p data-account-text="local">Entrar na conta não sincroniza fotos, recordes nem partidas. Você pode jogar sem conta.</p>
-<p id="account-status" role="status" data-account-text="pending">Verificando disponibilidade da conta…</p>
-<section id="account-signed-in" hidden>
+<p data-account-text="local">Entrar na conta não sincroniza fotos, recordes nem partidas. Você pode jogar sem conta.</p></div></header>
+<p class="panel" id="account-status" role="status" data-account-text="pending">Verificando disponibilidade da conta…</p>
+<section class="panel" id="account-signed-in" hidden>
  <p id="account-identity" dir="auto"></p>
  <button id="sign-out" data-account-text="signOut">Sair da conta</button>
 </section>
-<section id="account-forms" hidden>
+<section class="panel" id="account-forms" hidden>
  <h2 data-account-text="signIn">Entrar</h2>
  <form id="sign-in"><label><span data-account-text="email">E-mail</span> <input name="email" type="email" dir="ltr" maxlength="254" autocomplete="email" required></label><label><span data-account-text="password">Senha</span> <input name="password" type="password" maxlength="128" autocomplete="current-password" required></label><button type="submit" data-account-text="signIn">Entrar</button></form>
  <h2 data-account-text="signUp">Criar conta</h2>
@@ -18,7 +18,7 @@
  <h2 data-account-text="recover">Recuperar senha</h2>
  <form id="request-reset"><label><span data-account-text="email">E-mail</span> <input name="email" type="email" dir="ltr" maxlength="254" autocomplete="email" required></label><button type="submit" data-account-text="request">Pedir link de recuperação</button></form>
 </section>
-<form id="new-password" hidden>
+<form class="panel" id="new-password" hidden>
  <h2 data-account-text="newPassword">Nova senha</h2>
  <label><span data-account-text="newPassword">Nova senha</span> <input name="password" minlength="12" maxlength="128" type="password" autocomplete="new-password" required></label>
  <button type="submit" data-account-text="savePassword">Salvar nova senha</button>

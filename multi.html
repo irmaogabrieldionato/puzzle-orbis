@@ -1,32 +1,52 @@
 <!doctype html>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#172554"><title>Puzzle Orbis · Imagens misturadas</title><link rel="stylesheet" href="multi.css"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" type="image/png" href="icons/icon-192.png"><link rel="manifest" href="manifest.webmanifest"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4ebff"><title>Puzzle Orbis · Imagens misturadas</title><link rel="stylesheet" href="multi.css"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" type="image/png" href="icons/icon-192.png"><link rel="manifest" href="manifest.webmanifest"></head>
 <body><main>
-<a href="./" data-t="back">Voltar a uma imagem</a>
-<h1 data-t="multiTitle">Imagens misturadas</h1>
-<p data-t="multiHelp">Toque em duas peças para trocá-las, inclusive entre tabuleiros. Complete todos os tabuleiros para registrar o tempo.</p>
-<form id="setup">
- <div class="controls">
+<header class="hero">
+ <div><span class="hero-kicker">Puzzle Orbis</span><h1 data-t="multiTitle">Imagens misturadas</h1><p data-t="multiHelp">Toque em duas peças para trocá-las, inclusive entre tabuleiros. Complete todos os tabuleiros para registrar o tempo.</p><a class="nav-pill" href="./" data-t="back">Voltar a uma imagem</a></div>
+ <svg class="hero-art" aria-hidden="true" focusable="false" width="240" height="174" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 174">
+  <ellipse cx="119" cy="97" rx="106" ry="30" transform="rotate(-19 119 97)" fill="none" stroke="#9d81f0" stroke-width="5" stroke-linecap="round" stroke-dasharray="7 10"/>
+  <path d="M29 41l4 9 9 4-9 4-4 9-4-9-9-4 9-4zm176 68l5 10 11 4-11 4-5 10-4-10-11-4 11-4z" fill="#ffd36d"/>
+  <circle cx="191" cy="40" r="7" fill="#87e6cf"/>
+  <circle cx="54" cy="143" r="5" fill="#f8aada"/>
+  <g transform="rotate(10 121 85)" stroke="#25184b" stroke-width="5" stroke-linejoin="round">
+    <path d="M82 45h23c-4-7-3-17 3-22a17 17 0 0 1 24 0c6 5 7 15 3 22h22a15 15 0 0 1 15 15v19c7-4 16-3 21 3a16 16 0 0 1 0 22c-5 6-14 7-21 3v18a15 15 0 0 1-15 15h-23c4-7 3-15-3-20a16 16 0 0 0-22 0c-6 5-7 13-3 20H82a15 15 0 0 1-15-15V60a15 15 0 0 1 15-15z" transform="translate(0 7)" fill="#ed9a52"/>
+    <path d="M82 45h23c-4-7-3-17 3-22a17 17 0 0 1 24 0c6 5 7 15 3 22h22a15 15 0 0 1 15 15v19c7-4 16-3 21 3a16 16 0 0 1 0 22c-5 6-14 7-21 3v18a15 15 0 0 1-15 15h-23c4-7 3-15-3-20a16 16 0 0 0-22 0c-6 5-7 13-3 20H82a15 15 0 0 1-15-15V60a15 15 0 0 1 15-15z" fill="#ffd36d"/>
+    <path d="M79 70V61a5 5 0 0 1 5-5h14" fill="none" stroke="#fff2b8" stroke-linecap="round" stroke-width="4"/>
+    <ellipse cx="101" cy="85" rx="4" ry="6" fill="#25184b" stroke="none"/>
+    <ellipse cx="137" cy="85" rx="4" ry="6" fill="#25184b" stroke="none"/>
+    <path d="M112 95q7 9 15 0" fill="none" stroke-linecap="round" stroke-width="3.5"/>
+    <path d="M88 97h7m49 0h7" stroke="#ef8f88" stroke-linecap="round" stroke-width="5"/>
+  </g>
+</svg>
+</header>
+<form id="setup" class="panel">
+ <div class="settings">
  <label><span data-t="language">Idioma</span><select id="multi-language"></select></label>
  <label><span data-t="images">Imagens</span><select id="image-count"><option>2</option><option>3</option></select></label>
  <label><span data-t="level">Nível</span><select id="multi-level"></select></label>
  <label><span data-t="count">Contagem</span><select id="count-policy"><option value="total" data-t="total">Peças no total</option><option value="per-image" data-t="perImage">Peças por imagem</option></select></label>
  <label><span data-t="cutMode">Cortes</span><select id="multi-cut"><option value="square" data-t="square">Grade quadrada</option><option value="rectangular" data-t="rectangular">Retangulares</option><option value="mixed" data-t="mixed">Mistos</option><option value="random" data-t="random">Aleatórios</option></select></label>
  </div>
- <div class="controls" id="inputs">
+ <div class="settings" id="inputs">
  <label><span data-image="1">Imagem 1</span><input id="image-1" type="file" accept="image/*" required></label>
  <label><span data-image="2">Imagem 2</span><input id="image-2" type="file" accept="image/*" required></label>
  <label id="upload-third" hidden><span data-image="3">Imagem 3</span><input id="image-3" type="file" accept="image/*" disabled></label>
  </div>
- <button id="start" data-t="start" type="submit">Começar</button>
+ <button class="primary form-submit" id="start" data-t="start" type="submit">Começar</button>
 </form>
-<div class="controls">
- <button id="multi-pause" data-t="pause" disabled>Pausar</button><button id="multi-restart" data-t="reset" disabled>Reiniciar</button><button id="multi-save" data-t="save" disabled>Salvar neste navegador</button><button type="button" id="multi-delete">Apagar partida salva</button><button id="multi-load" data-t="load">Carregar partida salva</button>
+<section class="panel">
+ <div class="hud" aria-live="off">
+  <span class="hud-chip"><span aria-hidden="true">⏱</span> <span data-t="elapsed">Tempo</span> <strong id="multi-time" dir="ltr">00:00</strong></span>
+  <span class="hud-chip best"><span aria-hidden="true">🏆</span> <span data-t="best">Melhor tempo</span> <strong id="multi-best" dir="ltr">--:--</strong></span>
+ </div>
+ <p id="multi-status" role="status">Escolha as imagens para começar.</p>
+ <p id="board-feedback" class="sr-only" role="status" aria-atomic="true"></p>
+ <div id="boards"></div>
+</section>
+<div class="panel controls actions">
+ <button id="multi-pause" data-t="pause" disabled>Pausar</button><button id="multi-restart" data-t="reset" disabled>Reiniciar</button><button class="primary" id="multi-save" data-t="save" disabled>Salvar neste navegador</button><button class="danger" type="button" id="multi-delete">Apagar partida salva</button><button id="multi-load" data-t="load">Carregar partida salva</button>
 </div>
-<p><span data-t="elapsed">Tempo</span>: <strong id="multi-time" dir="ltr">00:00</strong> · <span data-t="best">Melhor tempo</span>: <strong id="multi-best" dir="ltr">--:--</strong></p>
-<p id="multi-status" role="status">Escolha as imagens para começar.</p>
-<p id="board-feedback" class="sr-only" role="status" aria-atomic="true"></p>
-<div id="boards"></div>
-<p class="muted" data-t="multiPrivacy">Até 8 MB por imagem. As imagens, a partida salva e os recordes ficam neste navegador.</p>
+<p class="muted footer-note" data-t="multiPrivacy">Até 8 MB por imagem. As imagens, a partida salva e os recordes ficam neste navegador.</p>
 </main><script type="module" src="./src/multi-app.js"></script></body>
 </html>

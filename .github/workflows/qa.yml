@@ -21,7 +21,10 @@ jobs:
         if: always()
         with:
           name: puzzle-orbis-browser-evidence
-          path: puzzle-orbis-rectangular.png
+          path: |
+            puzzle-orbis-rectangular.png
+            puzzle-orbis-cartoon-desktop.png
+            puzzle-orbis-cartoon-mobile.png
       - uses: actions/upload-artifact@v4
         with:
           name: puzzle-orbis-web

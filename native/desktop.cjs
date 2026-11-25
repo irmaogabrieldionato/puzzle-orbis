@@ -42,6 +42,8 @@ app.whenReady().then(async()=>{
   const timeout=setTimeout(()=>app.exit(1),15000);
   try{
    const levels=await win.webContents.executeJavaScript("document.querySelector('#level')?.options.length");
+   const image=await win.webContents.executeJavaScript("document.querySelector('.hero-art')?.getBBox().width");
+   if(!image)throw Error('Expected illustrated hero to load');
    if(levels!==10)throw Error('Expected ten single-image levels');
    await win.loadURL(local+'/multi.html');
    const multi=await win.webContents.executeJavaScript("document.querySelector('#multi-level')?.options.length");

@@ -28,6 +28,23 @@ const context=await browser.newContext({viewport:{width:390,height:844},hasTouch
 const page=await context.newPage();
 const url='http://127.0.0.1:'+server.address().port+'/';
 await page.goto(url);
+assert.ok(await page.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
+const mobileLayout = await page.evaluate(() => ({
+  viewport: document.documentElement.clientWidth,
+  page: document.documentElement.scrollWidth,
+  radius: Number.parseFloat(getComputedStyle(document.querySelector('.hero')).borderTopLeftRadius),
+  button: document.querySelector('#hint').getBoundingClientRect().height
+}));
+assert.equal(mobileLayout.page,mobileLayout.viewport,'Narrow layouts must not scroll sideways');
+assert.ok(mobileLayout.radius >= 22 && mobileLayout.button >= 44,'Rounded hero and touch-size controls');
+if(process.env.PUZZLE_SCREENSHOT) {
+ const desktop=await browser.newPage({viewport:{width:1280,height:900}});
+ await desktop.goto(url);
+ assert.ok(await desktop.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
+ await desktop.screenshot({path:'puzzle-orbis-cartoon-desktop.png',fullPage:true});
+ await desktop.close();
+}
+
 const state={image:data,level:0,pieces:[1,0,2,3],initialPieces:[1,0,2,3],moves:2,elapsedMs:4500,paused:true};
 await page.evaluate(v=>localStorage.setItem('puzzle-orbis-save',JSON.stringify(v)),state);
 await page.reload();
@@ -76,7 +93,10 @@ await strike([[1/6,.25],[5/6,.25]]);
 assert.match(await page.locator('#status').textContent(),/100%.*Movimentos: 10/);
 const sample=await page.locator('#board').evaluate(c=>[[.16,.25],[.5,.25],[.83,.25],[.5,.75]].map(([x,y])=>[...c.getContext('2d').getImageData(Math.floor(c.width*x),Math.floor(c.height*y),1,1).data]));
 assert.deepEqual(sample,[[255,0,0,255],[0,128,0,255],[0,0,255,255],[255,165,0,255]]);
-if (process.env.PUZZLE_SCREENSHOT) await page.locator('#board').screenshot({path:process.env.PUZZLE_SCREENSHOT});
+if (process.env.PUZZLE_SCREENSHOT) {
+ await page.locator('#board').screenshot({path:process.env.PUZZLE_SCREENSHOT});
+ await page.screenshot({path:'puzzle-orbis-cartoon-mobile.png',fullPage:true});
+}
 console.log('PASS: mobile/touch, old save, pause and resume, rectangular selection, completion, record isolation and canvas colors');
 for(const mode of ['mixed','random']){
  await page.locator('#cut-mode').selectOption(mode);
@@ -208,7 +228,10 @@ const tapMax=async(board)=>{
  const canvas=page.locator('#boards canvas').nth(board);
  await canvas.scrollIntoViewIfNeeded();
  const box=await canvas.boundingBox();
- await page.touchscreen.tap(box.x+box.width/84,box.y+box.height/84);
+ const point={x:box.x+box.width/84,y:box.y+box.height/84};
+ assert.ok(await canvas.evaluate((element,{x,y})=>document.elementFromPoint(x,y)===element,point),
+  'The rounded frame must not clip the first high-density piece');
+ await page.touchscreen.tap(point.x,point.y);
 };
 stage=Date.now();
 await tapMax(0);
@@ -284,6 +307,7 @@ const files=await tab.evaluate(async()=>{const result=[];for(const s of await ca
 for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/locales.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
 networkAvailable=false;
 await tab.reload();
+assert.ok(await tab.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
 await tab.waitForFunction(()=>!document.querySelector('#pause').disabled);
 await tab.goto(url+'multi.html');

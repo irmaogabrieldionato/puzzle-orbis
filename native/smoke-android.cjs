@@ -130,7 +130,7 @@ function stagePhoto() {
 }
 
 async function pickAndroidPhoto(page) {
-  await tapElement(page,'#file');
+  await tapElement(page,'#file',[[.16,.5]]);
   const seen = new Set();
   try {
     await waitFor(() => {
