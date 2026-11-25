@@ -30,3 +30,21 @@ export function containedFit(sw,sh,tw,th){
  const scale=Math.min(tw/sw,th/sh),width=sw*scale,height=sh*scale;
  return {x:(tw-width)/2,y:(th-height)/2,width,height};
 }
+
+// Return nearest slot in the requested visual direction without mirroring in RTL.
+const arrows=new Map([['ArrowLeft',[-1,0]],['ArrowRight',[1,0]],['ArrowUp',[0,-1]],['ArrowDown',[0,1]]]);
+export function isBoardArrow(key){return arrows.has(key)}
+export function nextBoardSlot(index,count,getRegion,key){
+ const direction=arrows.get(key),start=getRegion(index);
+ if(!direction||!start)return index;
+ const [dx,dy]=direction, cx=start.x+start.width/2,cy=start.y+start.height/2;
+ let nearest=Infinity, result=index;
+ for(let i=0;i<count;i++){
+  const region=getRegion(i);
+  if(!region)continue;
+  const x=region.x+region.width/2-cx,y=region.y+region.height/2-cy;
+  const forward=x*dx+y*dy,side=x*dy-y*dx,score=forward*forward+4*side*side;
+  if(forward>1e-9&&score<nearest){nearest=score;result=i;}
+ }
+ return result;
+}
