@@ -56,6 +56,31 @@ const sample=await page.locator('#board').evaluate(c=>[[.16,.25],[.5,.25],[.83,.
 assert.deepEqual(sample,[[255,0,0,255],[0,128,0,255],[0,0,255,255],[255,165,0,255]]);
 if (process.env.PUZZLE_SCREENSHOT) await page.locator('#board').screenshot({path:process.env.PUZZLE_SCREENSHOT});
 console.log('PASS: mobile/touch, old save, pause and resume, rectangular selection, completion, record isolation and canvas colors');
+for(const mode of ['mixed','random']){
+ await page.locator('#cut-mode').selectOption(mode);
+ await page.locator('#save').click();
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('puzzle-orbis-save')));
+ assert.equal(saved.cut,mode);
+ const position=await page.evaluate(async ({mode,data})=>{
+  const {variableLayout}=await import('/src/variable-cuts.js');
+  let a=2166136261,b=5381;
+  for(let i=0;i<data.length;i++){const c=data.charCodeAt(i);a=Math.imul(a^c,16777619);b=Math.imul(b,33)^c;}
+  const id=data.length+':'+(a>>>0).toString(16)+':'+(b>>>0).toString(16);
+  const board=document.querySelector('#board');
+  return variableLayout(mode,4,board.width,board.height,id+':0').slice(0,2).map(r=>[r.x+r.width/2,r.y+r.height/2]);
+ },{mode,data});
+ await page.evaluate(v=>localStorage.setItem('puzzle-orbis-save',JSON.stringify(v)),{...state,cut:mode});
+ await page.reload();
+ await page.locator('#language').selectOption('8');
+ await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Movimentos: 2'));
+ assert.equal(await page.locator('#cut-mode').inputValue(),mode);
+ assert.equal(await page.locator('#best').textContent(),'--:--');
+ await page.locator('#pause').click();
+ await strike(position);
+ assert.match(await page.locator('#status').textContent(),/100%.*Movimentos: 3/);
+ assert.match(await page.locator('#status').textContent(),/Novo recorde/);
+ console.log('PASS: touch playthrough, save compatibility and isolated record in '+mode);
+}
 await context.close();
 {
 const offline=await browser.newContext();
@@ -64,7 +89,7 @@ await tab.goto(url);
 await tab.waitForFunction(()=>navigator.serviceWorker?.controller?.state==='activated');
 const files=await tab.evaluate(async()=>{const result=[];for(const s of await caches.keys())for(const r of await (await caches.open(s)).keys())result.push(new URL(r.url).pathname);return result;});
 // The first visit itself loaded modules before the worker controlled the page.
-for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/storage.js','/src/rectangular.js'])assert.ok(files.includes(p),p+' was not cached on the first visit');
+for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js'])assert.ok(files.includes(p),p+' was not cached on the first visit');
 await offline.setOffline(true);
 await tab.reload();
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});

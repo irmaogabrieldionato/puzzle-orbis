@@ -85,6 +85,12 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     element('reset').onclick();
     element('save').onclick();
     assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).cut,'rectangular');
+    for(const mode of ['mixed','random']){
+      cut.value=mode;
+      cut.onchange();
+      element('save').onclick();
+      assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).cut,mode);
+    }
     cut.value='square';
     cut.onchange();
     element('save').onclick();
