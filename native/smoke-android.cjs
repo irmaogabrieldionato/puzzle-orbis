@@ -138,7 +138,7 @@ async function pickAndroidPhoto(page) {
       const photo = pickerNode(xml, /(?:text|content-desc)="[^"]*orbis-ci-photo[.]png/i);
       if (photo) { adb('shell','input','tap',...photo); return true; }
       const paths = [
-        ['Browse',/(?:text|content-desc)="Browse"/i],
+        ['Browse',/(?:text|content-desc)="Browse(?:…|[.]{3})?"/i],
         ['Files',/(?:text|content-desc)="Files"/i],
         ['Downloads',/(?:text|content-desc)="Downloads"/i],
         ['Open from',/content-desc="(?:Show roots|Open navigation drawer|Open from)"/i],
