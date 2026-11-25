@@ -102,7 +102,7 @@ const shuffled=await readArrangement();
 assert.ok(shuffled[0]!==colors[0]||shuffled[1]!==colors[1]);
 await page.locator('#multi-pause').click();
 await page.locator('#multi-save').click();
-await page.waitForFunction(()=>document.querySelector('#multi-status').textContent.includes('Partida salva'));
+await page.waitForFunction(()=>document.querySelector('#multi-status').textContent.includes('Salvo neste navegador'));
 await page.reload();
 await page.locator('#multi-load').click();
 await page.waitForFunction(()=>document.querySelectorAll('#boards canvas').length===3);
@@ -128,6 +128,20 @@ await page.locator('#start').click();
 await page.waitForFunction(()=>document.querySelectorAll('#boards canvas').length===2);
 assert.equal(await page.locator('#count-policy').inputValue(),'per-image');
 console.log('PASS: 3-image cross-board touch, IndexedDB reload, completion and 2-image setup');
+await page.locator('#multi-language').selectOption('5');
+assert.equal(await page.locator('html').getAttribute('lang'),'ar');
+assert.equal(await page.locator('html').getAttribute('dir'),'rtl');
+assert.equal(await page.locator('h1').textContent(),'صور مختلطة');
+assert.equal(await page.locator('#boards').evaluate(el=>getComputedStyle(el).direction),'ltr');
+await page.goto(url);
+assert.equal(await page.locator('html').getAttribute('dir'),'rtl');
+assert.equal(await page.locator('#cut-mode').getAttribute('aria-label'),'شكل القص');
+await page.locator('#language').selectOption('10');
+await page.reload();
+assert.equal(await page.locator('html').getAttribute('lang'),'ur');
+await page.locator('#language').selectOption('0');
+assert.equal(await page.locator('html').getAttribute('dir'),'ltr');
+console.log('PASS: multilingual pages, persistent locale, Arabic and Urdu RTL without board mirroring');
 await context.close();
 {
 const offline=await browser.newContext();
@@ -146,7 +160,7 @@ for(const icon of manifest.icons){
 }
 const files=await tab.evaluate(async()=>{const result=[];for(const s of await caches.keys())for(const r of await (await caches.open(s)).keys())result.push(new URL(r.url).pathname);return result;});
 // The first visit itself loaded modules before the worker controlled the page.
-for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
+for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/locales.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
 await offline.setOffline(true);
 await tab.reload();
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
