@@ -1,0 +1,6 @@
+{
+  "appId": "br.com.puzzleorbis.app",
+  "appName": "Puzzle Orbis",
+  "webDir": "www",
+  "server": { "hostname": "localhost", "androidScheme": "https" }
+}
