@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "build:web": "node scripts/build.mjs"
+    "build:web": "node scripts/build.mjs",
+    "build:web:auth": "node scripts/build.mjs && node auth/bundle.mjs"
   }
 }

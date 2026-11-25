@@ -1,0 +1,8 @@
+{
+  "name": "puzzle-orbis-auth-build",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.2",
+    "esbuild": "0.28.2"
+  }
+}
