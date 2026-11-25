@@ -75,6 +75,13 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     cut.onchange();
     element('save').onclick();
     assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).cut,'rectangular');
+    const before = JSON.parse(saved.get('puzzle-orbis-save'));
+    cut.onchange();
+    element('save').onclick();
+    const after = JSON.parse(saved.get('puzzle-orbis-save'));
+    assert.deepEqual(after.pieces, before.pieces);
+    assert.deepEqual(after.initialPieces, before.initialPieces);
+    assert.equal(after.moves, before.moves);
     element('reset').onclick();
     element('save').onclick();
     assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).cut,'rectangular');
