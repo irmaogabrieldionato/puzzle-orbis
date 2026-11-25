@@ -1,8 +1,18 @@
 name: Pacotes de teste Puzzle Orbis
 on:
   push:
+    branches: [main, "agent/dot/orb-native-*"]
     paths:
       - 'native/**'
+      - 'src/**'
+      - 'icons/**'
+      - 'index.html'
+      - 'multi.html'
+      - 'multi.css'
+      - 'account.html'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+      - 'scripts/build.mjs'
       - '.github/workflows/native-beta.yml'
   workflow_dispatch:
 permissions:
