@@ -142,6 +142,9 @@ assert.equal(await page.locator('html').getAttribute('lang'),'ur');
 await page.locator('#language').selectOption('0');
 assert.equal(await page.locator('html').getAttribute('dir'),'ltr');
 console.log('PASS: multilingual pages, persistent locale, Arabic and Urdu RTL without board mirroring');
+await page.goto(url+'account.html');
+await page.getByRole('status').filter({hasText:'O serviço de conta não está disponível'}).waitFor();
+assert.ok(await page.locator('#account-forms').isHidden());
 await context.close();
 {
 const offline=await browser.newContext();
