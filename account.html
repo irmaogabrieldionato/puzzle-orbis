@@ -2,26 +2,26 @@
 <html lang="pt-BR">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https://*.supabase.co; form-action 'none'; base-uri 'none'"><title>Puzzle Orbis · Conta</title><link rel="stylesheet" href="multi.css"></head>
 <body><main>
-<a href="./">Voltar ao jogo</a>
-<h1>Conta Puzzle Orbis</h1>
-<p>Entrar na conta não sincroniza fotos, recordes nem partidas. Você pode jogar sem conta.</p>
-<p id="account-status" role="status">Verificando disponibilidade da conta…</p>
+<a href="./" data-account-text="back">Voltar ao jogo</a>
+<h1 data-account-text="account">Conta Puzzle Orbis</h1>
+<p data-account-text="local">Entrar na conta não sincroniza fotos, recordes nem partidas. Você pode jogar sem conta.</p>
+<p id="account-status" role="status" data-account-text="pending">Verificando disponibilidade da conta…</p>
 <section id="account-signed-in" hidden>
- <p id="account-identity"></p>
- <button id="sign-out">Sair da conta</button>
+ <p id="account-identity" dir="auto"></p>
+ <button id="sign-out" data-account-text="signOut">Sair da conta</button>
 </section>
 <section id="account-forms" hidden>
- <h2>Entrar</h2>
- <form id="sign-in"><label>E-mail <input name="email" type="email" maxlength="254" autocomplete="email" required></label><label>Senha <input name="password" type="password" maxlength="128" autocomplete="current-password" required></label><button type="submit">Entrar</button></form>
- <h2>Criar conta</h2>
- <form id="sign-up"><label>Nome <input name="name" maxlength="100" autocomplete="name" required></label><label>E-mail <input name="email" type="email" maxlength="254" autocomplete="email" required></label><label>Senha <input name="password" minlength="12" maxlength="128" type="password" autocomplete="new-password" required></label><p>Use pelo menos 12 caracteres.</p><button type="submit">Criar conta</button></form>
- <h2>Recuperar senha</h2>
- <form id="request-reset"><label>E-mail <input name="email" type="email" maxlength="254" autocomplete="email" required></label><button type="submit">Pedir link de recuperação</button></form>
+ <h2 data-account-text="signIn">Entrar</h2>
+ <form id="sign-in"><label><span data-account-text="email">E-mail</span> <input name="email" type="email" dir="ltr" maxlength="254" autocomplete="email" required></label><label><span data-account-text="password">Senha</span> <input name="password" type="password" maxlength="128" autocomplete="current-password" required></label><button type="submit" data-account-text="signIn">Entrar</button></form>
+ <h2 data-account-text="signUp">Criar conta</h2>
+ <form id="sign-up"><label><span data-account-text="name">Nome</span> <input name="name" maxlength="100" autocomplete="name" required></label><label><span data-account-text="email">E-mail</span> <input name="email" type="email" dir="ltr" maxlength="254" autocomplete="email" required></label><label><span data-account-text="password">Senha</span> <input name="password" minlength="12" maxlength="128" type="password" autocomplete="new-password" required></label><p data-account-text="minimum">Use pelo menos 12 caracteres.</p><button type="submit" data-account-text="signUp">Criar conta</button></form>
+ <h2 data-account-text="recover">Recuperar senha</h2>
+ <form id="request-reset"><label><span data-account-text="email">E-mail</span> <input name="email" type="email" dir="ltr" maxlength="254" autocomplete="email" required></label><button type="submit" data-account-text="request">Pedir link de recuperação</button></form>
 </section>
 <form id="new-password" hidden>
- <h2>Nova senha</h2>
- <label>Nova senha <input name="password" minlength="12" maxlength="128" type="password" autocomplete="new-password" required></label>
- <button type="submit">Salvar nova senha</button>
+ <h2 data-account-text="newPassword">Nova senha</h2>
+ <label><span data-account-text="newPassword">Nova senha</span> <input name="password" minlength="12" maxlength="128" type="password" autocomplete="new-password" required></label>
+ <button type="submit" data-account-text="savePassword">Salvar nova senha</button>
 </form>
 </main><script type="module" src="./src/account.js"></script></body>
 </html>

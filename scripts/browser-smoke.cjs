@@ -172,7 +172,13 @@ await page.locator('#language').selectOption('0');
 assert.equal(await page.locator('html').getAttribute('dir'),'ltr');
 console.log('PASS: multilingual pages, persistent locale, Arabic and Urdu RTL without board mirroring');
 await page.goto(url+'account.html');
-await page.getByRole('status').filter({hasText:'O serviço de conta não está disponível'}).waitFor();
+await page.getByRole('status').filter({hasText:'Accounts are unavailable'}).waitFor();
+assert.equal(await page.locator('html').getAttribute('lang'),'en');
+await page.evaluate(()=>localStorage.setItem('puzzle-orbis-language','ar'));
+await page.reload();
+await page.getByRole('status').filter({hasText:'خدمة الحسابات غير متاحة'}).waitFor();
+assert.equal(await page.locator('html').getAttribute('dir'),'rtl');
+assert.equal(await page.locator('input[type=email]').first().getAttribute('dir'),'ltr');
 assert.ok(await page.locator('#account-forms').isHidden());
 await context.close();
 {

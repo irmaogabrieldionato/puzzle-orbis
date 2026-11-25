@@ -1,7 +1,16 @@
 import {authSettings} from './auth-config.js';
+import {direction,languageTag,savedLocale} from './i18n.js';
+import {accountLocale} from './account-locales.js';
 
 const $=id=>document.getElementById(id);
-const report=message=>{$('account-status').textContent=message;};
+let locale;
+try{locale=languageTag(savedLocale(window.localStorage));}catch{locale='pt-BR';}
+const copy=accountLocale(locale);
+document.documentElement.lang=locale;
+document.documentElement.dir=direction(locale);
+document.title=copy.account;
+for(const item of document.querySelectorAll('[data-account-text]'))item.textContent=copy[item.dataset.accountText];
+const report=key=>{$('account-status').textContent=copy[key];};
 let client, recovering=false;
 const locationForRedirect=new URL(location.pathname,location.origin).href;
 
@@ -18,7 +27,7 @@ async function submit(formId,action){
   if(button.disabled)return;
   button.disabled=true;
   try{await action(new FormData(form));form.reset();}
-  catch{report('Não foi possível concluir. Confira a conexão e tente novamente.');}
+  catch{report('failed');}
   finally{button.disabled=false;}
  });
 }
@@ -33,7 +42,7 @@ async function start(){
   if(event==='PASSWORD_RECOVERY'){
    recovering=true;
    render(session?.user);
-   report('Escolha uma nova senha para a sua conta.');
+   report('choose');
   }else if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='INITIAL_SESSION'){
    if(event==='SIGNED_OUT')recovering=false;
    render(session?.user);
@@ -42,36 +51,36 @@ async function start(){
  const {data:{user}}=await client.auth.getUser();
  if(!recovering){
   render(user);
-  report(user?'Você está conectado.':'Entre, crie uma conta ou continue jogando sem entrar.');
+  report(user?'connected':'start');
  }
  submit('sign-in',async form=>{
   const {error}=await client.auth.signInWithPassword({email:String(form.get('email')).trim(),password:String(form.get('password'))});
-  report(error?'Não foi possível entrar. Confira e-mail, senha e confirmação da conta.':'Você está conectado.');
+  report(error?'signInFailed':'connected');
  });
  submit('sign-up',async form=>{
   const name=String(form.get('name')).trim();
-  if(!name){report('Informe seu nome.');return;}
+  if(!name){report('enterName');return;}
   const {error,data}=await client.auth.signUp({
    email:String(form.get('email')).trim(),password:String(form.get('password')),
    options:{emailRedirectTo:config.redirect,data:{display_name:name}}
   });
-  report(!error&&data.session?'Você está conectado.':'Se a criação for possível, você receberá um e-mail de confirmação.');
+  report(!error&&data.session?'connected':'confirm');
  });
  submit('request-reset',async form=>{
   await client.auth.resetPasswordForEmail(String(form.get('email')).trim(),{redirectTo:config.redirect});
-  report('Se o endereço estiver cadastrado, você receberá um link de recuperação.');
+  report('reset');
  });
  submit('new-password',async form=>{
   if(!recovering)return;
   const {error,data}=await client.auth.updateUser({password:String(form.get('password'))});
-  if(error){report('Não foi possível alterar a senha. Solicite um novo link de recuperação.');return;}
-  recovering=false;render(data.user);report('Senha alterada.');
+  if(error){report('resetFailed');return;}
+  recovering=false;render(data.user);report('changed');
  });
  $('sign-out').addEventListener('click',async()=>{
   try{
    const {error}=await client.auth.signOut({scope:'local'});
-   report(error?'Não foi possível sair. Tente novamente.':'Você saiu da conta neste navegador.');
-  }catch{report('Não foi possível sair. Tente novamente.');}
+   report(error?'failed':'out');
+  }catch{report('failed');}
  });
 }
-start().catch(()=>report('O serviço de conta não está disponível nesta versão. Você pode jogar sem conta.'));
+start().catch(()=>report('unavailable'));
