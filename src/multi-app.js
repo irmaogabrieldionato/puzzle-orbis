@@ -14,7 +14,7 @@ const storage={
 };
 const fileInputs=[1,2,3].map(i=>$('image-'+i));
 const cuts=['square','rectangular','mixed','random'];
-let state=null,boards=[],origins=[],selection=null,cut='square',sourceBlobs=[],key=null,generation=0;
+let state=null,boards=[],origins=[],selection=null,cut='square',sourceImages=[],key=null,generation=0;
 let completed=false,newRecord=false;
 const lang=$('multi-language');
 const t=k=>translation(Number(lang.value))[k];
@@ -68,15 +68,14 @@ async function decode(blob){
   const bytes=await blob.arrayBuffer();
   const hash=await crypto.subtle.digest('SHA-256',bytes);
   const id=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
-  // Materialize selected File content before writing it to IndexedDB. A temporary
-  // picker-backed File can disappear before Safari serializes the transaction.
-  return {img,id,storedBlob:new Blob([bytes],{type:blob.type})};
+  // Store ordinary structured-clone bytes, not Safari file-backed blobs.
+  return {img,id,storedImage:{bytes,type:blob.type}};
  }finally{URL.revokeObjectURL(url);}
 }
 function activate(decoded,blobs,next,mode,snapshot){
  const counts=boardCounts(next.level,next.imageCount,next.policy);
  const slots=boardSlots(counts);
- state=next;sourceBlobs=blobs;cut=mode;selection=null;completed=solved(state.pieces);newRecord=false;origins=slots.flat();
+ state=next;sourceImages=blobs;cut=mode;selection=null;completed=solved(state.pieces);newRecord=false;origins=slots.flat();
  const views=$('boards');
  views.replaceChildren();
  boards=decoded.map(({img,id},i)=>{
@@ -164,7 +163,7 @@ async function begin(blobs,snapshot,version,settings){
   const {level,policy,cut:mode}=settings;
   if(!cuts.includes(mode))throw Error('openError');
   const next=snapshot?{level,imageCount:blobs.length,policy,pieces:snapshot.pieces,initialPieces:snapshot.initialPieces,moves:snapshot.moves}:createMulti(level,blobs.length,policy);
-  activate(decoded,decoded.map(item=>item.storedBlob),next,mode,snapshot);
+  activate(decoded,decoded.map(item=>item.storedImage),next,mode,snapshot);
  }catch(error){if(version===generation)status(['invalidImage','tooLarge','invalidDimensions'].includes(error.message)?t(error.message):t('openError'));}
 }
 $('setup').onsubmit=event=>{
@@ -178,7 +177,7 @@ $('multi-restart').onclick=restart;
 $('multi-save').onclick=async()=>{
  if(!state)return;
  try{
-  await saveMulti({...state,cut,images:sourceBlobs,version:1,elapsedMs:clock.elapsed(),paused:!clock.running});
+  await saveMulti({...state,cut,images:sourceImages,version:2,elapsedMs:clock.elapsed(),paused:!clock.running});
   status(t('saved'));
  }catch{status(t('noSpace'));}
 };
@@ -190,7 +189,8 @@ $('multi-load').onclick=async()=>{
   if(!isMultiSnapshot(saved)){status(t('noSaved'));return;}
   $('image-count').value=String(saved.imageCount);$('image-count').onchange();
   $('multi-level').value=String(saved.level);$('count-policy').value=saved.policy;$('multi-cut').value=saved.cut;
-  await begin(saved.images,saved,version,saved);
+  const images=saved.version===1?saved.images:saved.images.map(({bytes,type})=>new Blob([bytes],{type}));
+  await begin(images,saved,version,saved);
  }catch{if(version===generation)status(t('openError'));}
 };
 applyLanguage();

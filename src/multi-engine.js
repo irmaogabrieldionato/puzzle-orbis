@@ -38,8 +38,11 @@ export function swapMulti(state,first,second) {
  return {...state,moves:state.moves+1,pieces:swap(state.pieces,first,second)};
 }
 export function isMultiSnapshot(s) {
- if(!s||s.version!==1||!Array.isArray(s.images)||s.images.length!==s.imageCount||
-    !s.images.every(i=>i instanceof Blob&&i.type.startsWith('image/')&&i.size>0&&i.size<=8*1024*1024)||
+ if(!s||![1,2].includes(s.version)||!Array.isArray(s.images)||s.images.length!==s.imageCount||
+    !s.images.every(i=>{
+     const size=s.version===1?(i instanceof Blob?i.size:0):(i?.bytes instanceof ArrayBuffer?i.bytes.byteLength:0);
+     return typeof i?.type==='string'&&i.type.startsWith('image/')&&size>0&&size<=8*1024*1024;
+    })||
     !['square','rectangular','mixed','random'].includes(s.cut)||
     !Number.isSafeInteger(s.moves)||s.moves<0||!Number.isSafeInteger(s.elapsedMs)||s.elapsedMs<0)return false;
  try{

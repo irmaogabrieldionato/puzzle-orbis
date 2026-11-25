@@ -126,6 +126,10 @@ await page.locator('#multi-pause').click();
 await page.locator('#multi-save').click();
 await page.waitForFunction(()=>/Salvo neste navegador|Sem espaço/.test(document.querySelector('#multi-status').textContent));
 assert.match(await page.locator('#multi-status').textContent(),/Salvo neste navegador/);
+assert.equal(await page.evaluate(async()=>{
+ const saved=await (await import('/src/multi-store.js')).readMulti();
+ return saved.version===2&&saved.images.every(i=>i.bytes instanceof ArrayBuffer&&i.bytes.byteLength>0);
+}),true);
 await page.reload();
 await page.locator('#multi-load').click();
 await page.waitForFunction(()=>document.querySelectorAll('#boards canvas').length===3);

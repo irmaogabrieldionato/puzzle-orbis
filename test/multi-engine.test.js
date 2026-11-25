@@ -36,3 +36,11 @@ test('valida imagens, permutação, posição inicial e versão dos saves',()=>{
  assert.equal(isMultiSnapshot({...state,initialPieces:[]}),false);
  assert.equal(isMultiSnapshot({...state,version:99}),false);
 });
+
+test('accepts the browser-portable bytes format without dropping v1 Blob support',()=>{
+ const images=Array.from({length:2},()=>({bytes:new Uint8Array([1,2,3]).buffer,type:'image/png'}));
+ const state={...createMulti(0,2,'total'),images,version:2,cut:'random',elapsedMs:400};
+ assert.equal(isMultiSnapshot(structuredClone(state)),true);
+ assert.equal(isMultiSnapshot({...state,version:1}),false);
+ assert.equal(isMultiSnapshot({...state,images:[{bytes:new ArrayBuffer(0),type:'image/png'},images[1]]}),false);
+});
