@@ -15,3 +15,10 @@ jobs:
       - run: npm install --no-save --package-lock=false playwright@1.62.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/browser-smoke.cjs
+        env:
+          PUZZLE_SCREENSHOT: puzzle-orbis-rectangular.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: puzzle-orbis-browser-evidence
+          path: puzzle-orbis-rectangular.png
