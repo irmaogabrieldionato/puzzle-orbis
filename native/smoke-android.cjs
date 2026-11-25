@@ -6,7 +6,11 @@ const { setTimeout: delay } = require('node:timers/promises');
 const packageId = 'br.com.puzzleorbis.app';
 const port = '9222';
 const adb = (...args) => execFileSync('adb', args, { encoding: 'utf8', timeout: 60_000 }).trim();
-const image = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#ff0000"/><rect width="100" height="100" fill="#0000ff"/></svg>';
+const fixtureName = 'orbis-ci-photo.png';
+// Synthetic sRGB PNG: 200x200, red with a blue top-left quadrant.
+const fixture = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAIAAAAiOjnJAAAB10lEQVR42u3SwQkAAAgDse6/tK7Qp2DgJjiSZFRmQV9MAAsssMACCyyBBRZYYIEFlsACCyywwAJLYIEFFlhggSWwwAILLLDAElhggQUWWGAJLLDAAgsssAQWWGCBBRZYAgsssMACCyyBBRZYYIEFlsACCyywwAJLYIEFFlhggSWwwAILLLDAElhggQUWWGDJArDAAgsssMASWGCBBRZYYAkssMACCyywBBZYYIEFFlgCCyywwAILLIEFFlhggQWWwAILLLDAAktggQUWWGCBJbDAAgsssMASWGCBBRZYYAkssMACCyywBBZYYIEFFlgCCyywwAILLIEFFlhggQWWwAILLLDAAgssE8ACCyywwAJLYIEFFlhggSWwwAILLLDAElhggXUclgUCS2AJLAksgSWwJLAElsCSwBJYAksCS2AJLAksgSWwJLAElsCSwBJYAksCS2AJLAksgSWwJLAElsCSwBJYAksCS2AJLAksgSWwJLAElsCSwBJYAksCS2AJLAksgSWwJLAElsCSwBJYAksCS2AJLAksgSWwJLAElsCSwBJYAksCS2AJLAksgSWwJLAElsCSwBJYAkuyQGAJLIElgSWwBJYElsASWBJYAktgSWAJLD1sAfsVrNb5QhplAAAAAElFTkSuQmCC','base64');
+const xmlPath = '/sdcard/orbis-picker.xml';
+
 
 async function waitFor(check, label) {
   const end = Date.now() + 30_000;
@@ -82,18 +86,81 @@ async function pixels(page) {
   return result;
 }
 
-async function tapSlots(page, points) {
+async function tapElement(page, selector, points = [[.5,.5]]) {
   const box = await page.evaluate(`(async () => {
-    const c = document.querySelector('#board');
-    c.scrollIntoView({block:'center',inline:'nearest'});
+    const element = document.querySelector(${JSON.stringify(selector)});
+    element.scrollIntoView({block:'center',inline:'nearest'});
     await new Promise(resolve => requestAnimationFrame(resolve));
-    const {left,top,width,height} = c.getBoundingClientRect();
+    const {left,top,width,height} = element.getBoundingClientRect();
     return {left,top,width,height};
   })()`);
   for (const [x,y] of points) {
     await page.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{x:box.left+box.width*x,y:box.top+box.height*y}] });
     await page.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   }
+}
+
+function pickerXml() {
+  adb('shell','uiautomator','dump',xmlPath);
+  return adb('shell','cat',xmlPath);
+}
+
+function pickerNode(xml, regex) {
+  for (const node of xml.match(/<node [^>]*>/g) ?? []) {
+    if (!regex.test(node)) continue;
+    const bounds = node.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);
+    if (!bounds) continue;
+    const [x1,y1,x2,y2] = bounds.slice(1).map(Number);
+    if (x2 > x1 && y2 > y1) return [Math.floor((x1+x2)/2),Math.floor((y1+y2)/2)].map(String);
+  }
+}
+
+function stagePhoto() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const directory = fs.mkdtempSync(path.join(require('node:os').tmpdir(),'orbis-photo-'));
+  const remote = '/sdcard/Download/'+fixtureName;
+  try {
+    const source = path.join(directory,fixtureName);
+    writeFileSync(source, fixture);
+    adb('shell','mkdir','-p','/sdcard/Download');
+    adb('push',source,remote);
+    adb('shell','am','broadcast','-a','android.intent.action.MEDIA_SCANNER_SCAN_FILE','-d','file://'+remote);
+  } finally { fs.rmSync(directory,{recursive:true,force:true}); }
+}
+
+async function pickAndroidPhoto(page) {
+  await tapElement(page,'#file');
+  const seen = new Set();
+  try {
+    await waitFor(() => {
+      const xml = pickerXml();
+      const photo = pickerNode(xml, /(?:text|content-desc)="[^"]*orbis-ci-photo[.]png/i);
+      if (photo) { adb('shell','input','tap',...photo); return true; }
+      const paths = [
+        ['Browse',/(?:text|content-desc)="Browse"/i],
+        ['Files',/(?:text|content-desc)="Files"/i],
+        ['Downloads',/(?:text|content-desc)="Downloads"/i],
+        ['Open from',/content-desc="(?:Show roots|Open navigation drawer|Open from)"/i],
+        ['More options',/content-desc="More options"/i]
+      ];
+      for (const [name,match] of paths) {
+        if (seen.has(name)) continue;
+        const point = pickerNode(xml,match);
+        if (!point) continue;
+        seen.add(name);
+        adb('shell','input','tap',...point);
+        break;
+      }
+    }, 'fixture photo displayed by the Android picker');
+    await waitFor(() => page.evaluate(`document.querySelector('#file').files?.[0]?.name === ${JSON.stringify(fixtureName)}`),
+      'Android picker returning the selected file to Puzzle Orbis');
+  } catch (error) {
+    try { writeFileSync('puzzle-orbis-android-picker.xml',pickerXml()); } catch {}
+    try { writeFileSync('puzzle-orbis-android-picker.png',execFileSync('adb',['exec-out','screencap','-p'],{timeout:10000,maxBuffer:16000000})); } catch {}
+    throw error;
+  }
+  console.log('PASS: Android system file picker selected the PNG and returned it to Puzzle Orbis.');
 }
 
 const status = (page, expected) => waitFor(
@@ -106,6 +173,7 @@ const status = (page, expected) => waitFor(
   try {
     assert.ok(process.argv[2], 'Pass the packaged debug APK');
     assert.match(adb('install', '-r', process.argv[2]), /Success/);
+    stagePhoto();
     page = await launch();
     await waitFor(() => page.evaluate(`document.querySelector('#language')?.options.length === 15`), 'game startup');
     assert.match(await page.evaluate(`document.querySelector('h1').textContent`), /Puzzle Orbis/);
@@ -113,18 +181,15 @@ const status = (page, expected) => waitFor(
       const language = document.querySelector('#language');
       language.value = '8';
       language.dispatchEvent(new Event('change', {bubbles:true}));
-      const input = document.querySelector('#file'), files = new DataTransfer();
-      files.items.add(new File([${JSON.stringify(image)}], 'orbis-ci.svg', {type:'image/svg+xml'}));
-      input.files = files.files;
-      input.dispatchEvent(new Event('change', {bubbles:true}));
     })()`);
+    await pickAndroidPhoto(page);
     await status(page,'Movimentos: 0');
     const before = await pixels(page);
     // Swap the blue tile with another color so the visual assertion can detect the move.
     const points = [[.25,.25],[.75,.25],[.25,.75],[.75,.75]];
     const blue = before.findIndex(p => p.join() === '0,0,255,255');
     const other = (blue+1)%4;
-    await tapSlots(page, [points[blue],points[other]]);
+    await tapElement(page, '#board', [points[blue],points[other]]);
     await status(page,'Movimentos: 1');
     const after = await pixels(page);
     const expected = before.slice();

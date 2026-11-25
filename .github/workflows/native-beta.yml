@@ -144,7 +144,10 @@ jobs:
         if: always()
         with:
           name: puzzle-orbis-android-emulator-evidence
-          path: puzzle-orbis-android-board.png
+          path: |
+            puzzle-orbis-android-board.png
+            puzzle-orbis-android-picker.png
+            puzzle-orbis-android-picker.xml
           if-no-files-found: ignore
   ios:
     runs-on: macos-15
