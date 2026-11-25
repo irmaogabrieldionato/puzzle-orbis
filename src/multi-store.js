@@ -25,3 +25,5 @@ export const readMulti=()=>transaction('readonly',store=>store.get('active'));
 
 export const saveSingle=snapshot=>transaction('readwrite',store=>store.put(snapshot,'single'));
 export const readSingle=()=>transaction('readonly',store=>store.get('single'));
+export const deleteSingle=()=>transaction('readwrite',store=>store.delete('single'));
+export const deleteMulti=()=>transaction('readwrite',store=>store.delete('active'));
