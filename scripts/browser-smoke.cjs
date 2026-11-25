@@ -36,7 +36,12 @@ await page.waitForFunction(()=>document.querySelector('#status').textContent.inc
 assert.equal(await page.locator('#cut-mode').inputValue(),'square');
 assert.equal(await page.locator('#elapsed').textContent(),'00:04');
 assert.equal(await page.locator('#pause').textContent(),'Continuar');
-const strike=async points=>{const box=await page.locator('#board').boundingBox(); for(const [x,y] of points)await page.touchscreen.tap(box.x+box.width*x,box.y+box.height*y);};
+const strike=async points=>{
+ const canvas=page.locator('#board');
+ await canvas.scrollIntoViewIfNeeded();
+ const box=await canvas.boundingBox();
+ for(const [x,y] of points)await page.touchscreen.tap(box.x+box.width*x,box.y+box.height*y);
+};
 await page.locator('#pause').click();
 await page.locator('#board').focus();
 await page.keyboard.press('Enter');
