@@ -4,7 +4,7 @@ const { createServer } = require('node:http');
 const { readFile } = require('node:fs/promises');
 const { resolve, extname, sep } = require('node:path');
 const root = resolve(__dirname, '../www');
-const types = {'.html':'text/html','.js':'text/javascript','.webmanifest':'application/manifest+json'};
+const types = {'.html':'text/html','.js':'text/javascript','.webmanifest':'application/manifest+json','.png':'image/png','.css':'text/css'};
 const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   const file = resolve(root, '.'+(pathname === '/' ? '/index.html' : pathname));
@@ -134,9 +134,19 @@ const offline=await browser.newContext();
 const tab=await offline.newPage();
 await tab.goto(url);
 await tab.waitForFunction(()=>navigator.serviceWorker?.controller?.state==='activated');
+const manifest=await (await tab.request.get(url+'manifest.webmanifest')).json();
+assert.equal(manifest.display,'standalone');
+assert.equal(manifest.scope,'./');
+assert.ok(manifest.icons.some(icon=>icon.purpose==='maskable'));
+for(const icon of manifest.icons){
+ const response=await tab.request.get(url+icon.src);
+ assert.equal(response.headers()['content-type'],'image/png');
+ const data=await response.body();
+ assert.equal(data.readUInt32BE(16)+'x'+data.readUInt32BE(20),icon.sizes);
+}
 const files=await tab.evaluate(async()=>{const result=[];for(const s of await caches.keys())for(const r of await (await caches.open(s)).keys())result.push(new URL(r.url).pathname);return result;});
 // The first visit itself loaded modules before the worker controlled the page.
-for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js'])assert.ok(files.includes(p),p+' was not cached on the first visit');
+for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
 await offline.setOffline(true);
 await tab.reload();
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
