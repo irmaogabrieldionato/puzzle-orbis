@@ -28,6 +28,23 @@ const context=await browser.newContext({viewport:{width:390,height:844},hasTouch
 const page=await context.newPage();
 const url='http://127.0.0.1:'+server.address().port+'/';
 await page.goto(url);
+await page.locator('.hero-art').evaluate(img=>img.decode());
+const mobileLayout = await page.evaluate(() => ({
+  viewport: document.documentElement.clientWidth,
+  page: document.documentElement.scrollWidth,
+  radius: Number.parseFloat(getComputedStyle(document.querySelector('.hero')).borderTopLeftRadius),
+  button: document.querySelector('#hint').getBoundingClientRect().height
+}));
+assert.equal(mobileLayout.page,mobileLayout.viewport,'Narrow layouts must not scroll sideways');
+assert.ok(mobileLayout.radius >= 22 && mobileLayout.button >= 44,'Rounded hero and touch-size controls');
+if(process.env.PUZZLE_SCREENSHOT) {
+ const desktop=await browser.newPage({viewport:{width:1280,height:900}});
+ await desktop.goto(url);
+ await desktop.locator('.hero-art').evaluate(img=>img.decode());
+ await desktop.screenshot({path:'puzzle-orbis-cartoon-desktop.png',fullPage:true});
+ await desktop.close();
+}
+
 const state={image:data,level:0,pieces:[1,0,2,3],initialPieces:[1,0,2,3],moves:2,elapsedMs:4500,paused:true};
 await page.evaluate(v=>localStorage.setItem('puzzle-orbis-save',JSON.stringify(v)),state);
 await page.reload();
@@ -76,7 +93,10 @@ await strike([[1/6,.25],[5/6,.25]]);
 assert.match(await page.locator('#status').textContent(),/100%.*Movimentos: 10/);
 const sample=await page.locator('#board').evaluate(c=>[[.16,.25],[.5,.25],[.83,.25],[.5,.75]].map(([x,y])=>[...c.getContext('2d').getImageData(Math.floor(c.width*x),Math.floor(c.height*y),1,1).data]));
 assert.deepEqual(sample,[[255,0,0,255],[0,128,0,255],[0,0,255,255],[255,165,0,255]]);
-if (process.env.PUZZLE_SCREENSHOT) await page.locator('#board').screenshot({path:process.env.PUZZLE_SCREENSHOT});
+if (process.env.PUZZLE_SCREENSHOT) {
+ await page.locator('#board').screenshot({path:process.env.PUZZLE_SCREENSHOT});
+ await page.screenshot({path:'puzzle-orbis-cartoon-mobile.png',fullPage:true});
+}
 console.log('PASS: mobile/touch, old save, pause and resume, rectangular selection, completion, record isolation and canvas colors');
 for(const mode of ['mixed','random']){
  await page.locator('#cut-mode').selectOption(mode);
