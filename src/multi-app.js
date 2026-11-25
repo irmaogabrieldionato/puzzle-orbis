@@ -1,5 +1,5 @@
 import {translation,languageTag,direction,savedLocale,saveLocale} from './i18n.js';
-import {CUTS,LANGUAGES,canvasSize,containedFit,pieceRect,solved} from './engine.js';
+import {CUTS,LANGUAGES,canvasSize,containedFit,pieceRect,solved,isBoardArrow,nextBoardSlot} from './engine.js';
 import {rectangularPieceRect} from './rectangular.js';
 import {layoutPieceAt,variableLayout} from './variable-cuts.js';
 import {boardCounts,boardSlots,createMulti,swapMulti,multiProgress,isMultiSnapshot} from './multi-engine.js';
@@ -92,20 +92,11 @@ function activate(decoded,blobs,next,mode,snapshot){
    if(i>=0)choose(board.slots[i].id);
   });
   canvas.addEventListener('keydown',event=>{
-   const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
-   if(!directions[event.key]&&event.key!=='Enter'&&event.key!==' ')return;
+   if(!isBoardArrow(event.key)&&event.key!=='Enter'&&event.key!==' ')return;
    event.preventDefault();
-   if(board.cursor===null)board.cursor=0;
-   if(directions[event.key]){
-    const [dx,dy]=directions[event.key], a=regions[board.cursor], cx=a.x+a.width/2, cy=a.y+a.height/2;
-    let nearest=Infinity, candidate=board.cursor;
-    regions.forEach((b,j)=>{
-     const x=b.x+b.width/2-cx,y=b.y+b.height/2-cy,forward=x*dx+y*dy,side=x*dy-y*dx;
-     const score=forward*forward+4*side*side;
-     if(forward>0&&score<nearest){nearest=score;candidate=j;}
-    });
-    board.cursor=candidate;
-   }else choose(board.slots[board.cursor].id);
+   board.cursor??=0;
+   if(isBoardArrow(event.key))board.cursor=nextBoardSlot(board.cursor,regions.length,i=>regions[i],event.key);
+   else choose(board.slots[board.cursor].id);
    draw();
   });
   canvas.addEventListener('blur',()=>{board.cursor=null;draw();});
