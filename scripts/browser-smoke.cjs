@@ -1,4 +1,5 @@
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
+const browserEngine=process.env.PUZZLE_BROWSER==='webkit'?webkit:chromium;
 const assert = require('node:assert/strict');
 const { createServer } = require('node:http');
 const { readFile } = require('node:fs/promises');
@@ -20,7 +21,7 @@ const data='data:image/svg+xml;base64,'+Buffer.from(svg).toString('base64');
 await new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok);});
 let browser;
 try{
-browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH});
+browser=await browserEngine.launch({executablePath:process.env.CHROMIUM_PATH});
 const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
 const page=await context.newPage();
 const url='http://127.0.0.1:'+server.address().port+'/';
