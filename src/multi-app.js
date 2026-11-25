@@ -1,3 +1,4 @@
+import {privacyCopy,bindSaveDeletion,deleteMulti} from './save-privacy.js';
 import {translation,languageTag,direction,savedLocale,saveLocale} from './i18n.js';
 import {CUTS,LANGUAGES,canvasSize,containedFit,pieceRect,solved,isBoardArrow,nextBoardSlot} from './engine.js';
 import {rectangularPieceRect} from './rectangular.js';
@@ -15,7 +16,7 @@ const storage={
 const fileInputs=[1,2,3].map(i=>$('image-'+i));
 const cuts=['square','rectangular','mixed','random'];
 let state=null,boards=[],origins=[],selection=null,cut='square',sourceImages=[],key=null,generation=0;
-let completed=false,newRecord=false;
+let completed=false,newRecord=false,saving=false,restoreRequest=0;
 const lang=$('multi-language');
 const t=k=>translation(Number(lang.value))[k];
 LANGUAGES.forEach((name,i)=>lang.add(new Option(name,i)));
@@ -28,6 +29,7 @@ function applyLanguage(){
  if(accountLink?.hasAttribute?.('data-orbis-account'))import('./account-locales.js').then(({accountLocale})=>{accountLink.textContent=accountLocale(document.documentElement.lang).account;});
 
  document.title='Puzzle Orbis · '+t('multiTitle');
+ $('multi-delete').textContent=privacyCopy(index).label;
  for(const el of document.querySelectorAll('[data-t]'))el.textContent=t(el.dataset.t);
  for(const el of document.querySelectorAll('[data-image]'))el.textContent=t('image')+' '+el.dataset.image;
  const level=$('multi-level'), prev=level.value;
@@ -158,11 +160,11 @@ function draw(){
  }
  status(t(completed?'completed':'progress')+': '+stats.total+'% · '+t('moves')+': '+state.moves+(newRecord?' · '+t('newRecord'):''));
 }
-async function begin(blobs,snapshot,version,settings){
+async function begin(blobs,snapshot,version,settings,stillValid=()=>true){
  try{
   if(!blobs.every(f=>f&&f.type.startsWith('image/')&&f.size>0&&f.size<=8*1024*1024))throw Error(blobs.some(f=>f?.size>8*1024*1024)?'tooLarge':'invalidImage');
   const decoded=await Promise.all(blobs.map(decode));
-  if(version!==generation)return;
+  if(version!==generation||!stillValid())return;
   const {level,policy,cut:mode}=settings;
   if(!cuts.includes(mode))throw Error('openError');
   const next=snapshot?{level,imageCount:blobs.length,policy,pieces:snapshot.pieces,initialPieces:snapshot.initialPieces,moves:snapshot.moves}:createMulti(level,blobs.length,policy);
@@ -178,24 +180,31 @@ $('setup').onsubmit=event=>{
 $('multi-pause').onclick=()=>{if(!state||completed)return;if(clock.running)clock.pause();else clock.start();controls();time();};
 $('multi-restart').onclick=restart;
 $('multi-save').onclick=async()=>{
- if(!state)return;
+ if(!state||saving||$('multi-delete').disabled)return;
+ saving=true;
  try{
   await saveMulti({...state,cut,images:sourceImages,version:2,elapsedMs:clock.elapsed(),paused:!clock.running});
   status(t('saved'));
  }catch{status(t('noSpace'));}
+ finally{saving=false;}
 };
 $('multi-load').onclick=async()=>{
- const version=++generation;
+ if($('multi-delete').disabled)return;
+ const version=++generation, token=++restoreRequest;
  try{
   const saved=await readMulti();
-  if(version!==generation)return;
+  if(version!==generation||token!==restoreRequest)return;
   if(!isMultiSnapshot(saved)){status(t('noSaved'));return;}
   $('image-count').value=String(saved.imageCount);$('image-count').onchange();
   $('multi-level').value=String(saved.level);$('count-policy').value=saved.policy;$('multi-cut').value=saved.cut;
   const images=saved.version===1?saved.images:saved.images.map(({bytes,type})=>new Blob([bytes],{type}));
-  await begin(images,saved,version,saved);
+  await begin(images,saved,version,saved,()=>token===restoreRequest);
  }catch{if(version===generation)status(t('openError'));}
 };
+bindSaveDeletion({
+ button:$('multi-delete'),locale:()=>Number(lang.value),busy:()=>saving,
+ onConfirmed:()=>{restoreRequest++;},erase:deleteMulti,report:status
+});
 applyLanguage();
 setInterval(time,250);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
