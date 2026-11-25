@@ -6,7 +6,9 @@ const { readFile } = require('node:fs/promises');
 const { resolve, extname, sep } = require('node:path');
 const root = resolve(__dirname, '../www');
 const types = {'.html':'text/html','.js':'text/javascript','.webmanifest':'application/manifest+json','.png':'image/png','.css':'text/css'};
+let networkAvailable=true;
 const server = createServer(async (req, res) => {
+  if(!networkAvailable){req.socket.destroy();return;}
   const pathname = new URL(req.url, 'http://localhost').pathname;
   const file = resolve(root, '.'+(pathname === '/' ? '/index.html' : pathname));
   if (!file.startsWith(root+sep)) { res.writeHead(403).end(); return; }
@@ -191,7 +193,7 @@ for(const icon of manifest.icons){
 const files=await tab.evaluate(async()=>{const result=[];for(const s of await caches.keys())for(const r of await (await caches.open(s)).keys())result.push(new URL(r.url).pathname);return result;});
 // The first visit itself loaded modules before the worker controlled the page.
 for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/locales.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
-await offline.setOffline(true);
+networkAvailable=false;
 await tab.reload();
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
 await tab.waitForFunction(()=>!document.querySelector('#pause').disabled);
