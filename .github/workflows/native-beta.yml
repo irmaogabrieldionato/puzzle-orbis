@@ -71,6 +71,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: gradle
+          cache-dependency-path: native/package-lock.json
       - run: npm ci --prefix native
       - run: npm run build:web
       - run: cp -r www native/www
@@ -84,8 +86,20 @@ jobs:
           done
       - run: npx cap sync android
         working-directory: native
-      - run: ./gradlew --no-daemon assembleDebug bundleRelease
+      - name: Build Android and retry Maven rate limits
+        shell: bash
         working-directory: native/android
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            if ./gradlew --no-daemon assembleDebug bundleRelease 2>&1 | tee "$RUNNER_TEMP/orbis-gradle.log"; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ] || ! grep -Eiq 'status code 429|Too Many Requests' "$RUNNER_TEMP/orbis-gradle.log"; then
+              exit 1
+            fi
+            sleep "$((attempt * 35))"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: puzzle-orbis-android-apk-debug-and-aab-unsigned
