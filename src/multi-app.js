@@ -65,9 +65,12 @@ async function decode(blob){
   img.src=url;
   await img.decode();
   if(!img.naturalWidth||!img.naturalHeight||img.naturalWidth*img.naturalHeight>39000000)throw Error('invalidDimensions');
-  const hash=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());
+  const bytes=await blob.arrayBuffer();
+  const hash=await crypto.subtle.digest('SHA-256',bytes);
   const id=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
-  return {img,id};
+  // Materialize selected File content before writing it to IndexedDB. A temporary
+  // picker-backed File can disappear before Safari serializes the transaction.
+  return {img,id,storedBlob:new Blob([bytes],{type:blob.type})};
  }finally{URL.revokeObjectURL(url);}
 }
 function activate(decoded,blobs,next,mode,snapshot){
@@ -161,7 +164,7 @@ async function begin(blobs,snapshot,version,settings){
   const {level,policy,cut:mode}=settings;
   if(!cuts.includes(mode))throw Error('openError');
   const next=snapshot?{level,imageCount:blobs.length,policy,pieces:snapshot.pieces,initialPieces:snapshot.initialPieces,moves:snapshot.moves}:createMulti(level,blobs.length,policy);
-  activate(decoded,blobs,next,mode,snapshot);
+  activate(decoded,decoded.map(item=>item.storedBlob),next,mode,snapshot);
  }catch(error){if(version===generation)status(['invalidImage','tooLarge','invalidDimensions'].includes(error.message)?t(error.message):t('openError'));}
 }
 $('setup').onsubmit=event=>{
