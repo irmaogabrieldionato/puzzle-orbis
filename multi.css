@@ -53,7 +53,7 @@ button.danger:not(:disabled):hover{background:#fce4ef}
 .hud-chip strong{font-variant-numeric:tabular-nums;min-width:2.6em}
 #status,#multi-status,#account-status{margin:0 0 .78rem;color:#48356d;font-weight:750;overflow-wrap:anywhere}
 .board-frame{background:#e4d3fb;border:2px solid #c6aced;border-bottom-width:5px;border-radius:25px;padding:clamp(6px,1.5vw,12px)}
-canvas{display:block;width:100%;height:auto;background:radial-gradient(circle,#ab91d7 1px,transparent 1.2px) 0 0/20px 20px,#f5efff;border-radius:14px;touch-action:none;cursor:pointer}
+canvas{display:block;width:100%;height:auto;background:radial-gradient(circle,#ab91d7 1px,transparent 1.2px) 0 0/20px 20px,#f5efff;touch-action:none;cursor:pointer}
 #board{max-width:640px;margin-inline:auto}
 #boards{direction:ltr;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:1rem;align-items:start}
 #boards section{min-width:0;background:#e4d3fb;border:2px solid #c6aced;border-bottom-width:5px;border-radius:23px;padding:.65rem}

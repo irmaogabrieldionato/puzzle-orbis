@@ -228,7 +228,10 @@ const tapMax=async(board)=>{
  const canvas=page.locator('#boards canvas').nth(board);
  await canvas.scrollIntoViewIfNeeded();
  const box=await canvas.boundingBox();
- await page.touchscreen.tap(box.x+box.width/84,box.y+box.height/84);
+ const point={x:box.x+box.width/84,y:box.y+box.height/84};
+ assert.ok(await canvas.evaluate((element,{x,y})=>document.elementFromPoint(x,y)===element,point),
+  'The rounded frame must not clip the first high-density piece');
+ await page.touchscreen.tap(point.x,point.y);
 };
 stage=Date.now();
 await tapMax(0);
