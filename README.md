@@ -38,3 +38,6 @@ Não incluir galeria temática, desafio diário, competição, cooperativo ou si
 ## Segurança
 
 Não enviar senhas, chaves de serviço Supabase, credenciais SMTP ou outros segredos ao GitHub. Imagens e salvamentos atuais são processados localmente no navegador.
+
+## Instalar a versão web (PWA)
+Abra o jogo servido por HTTPS. Em navegadores compatíveis, use **Instalar app** ou **Adicionar à tela inicial**; no iOS, use o menu Compartilhar do Safari. Após a primeira visita online, o jogo e o modo de duas/três imagens podem abrir offline no mesmo endereço. A instalação web não é uma publicação nas lojas. O pacote `puzzle-orbis-web` fica nos artefatos de uma execução aprovada do GitHub Actions; sirva seu conteúdo por HTTPS em produção, não por `file://`.

@@ -22,3 +22,8 @@ jobs:
         with:
           name: puzzle-orbis-browser-evidence
           path: puzzle-orbis-rectangular.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: puzzle-orbis-web
+          path: www/
+          if-no-files-found: error
