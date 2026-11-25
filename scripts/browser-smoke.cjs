@@ -1,11 +1,14 @@
-const { chromium } = require('playwright');
+const { chromium, webkit } = require('playwright');
+const browserEngine=process.env.PUZZLE_BROWSER==='webkit'?webkit:chromium;
 const assert = require('node:assert/strict');
 const { createServer } = require('node:http');
 const { readFile } = require('node:fs/promises');
 const { resolve, extname, sep } = require('node:path');
 const root = resolve(__dirname, '../www');
 const types = {'.html':'text/html','.js':'text/javascript','.webmanifest':'application/manifest+json','.png':'image/png','.css':'text/css'};
+let networkAvailable=true;
 const server = createServer(async (req, res) => {
+  if(!networkAvailable){req.socket.destroy();return;}
   const pathname = new URL(req.url, 'http://localhost').pathname;
   const file = resolve(root, '.'+(pathname === '/' ? '/index.html' : pathname));
   if (!file.startsWith(root+sep)) { res.writeHead(403).end(); return; }
@@ -20,7 +23,7 @@ const data='data:image/svg+xml;base64,'+Buffer.from(svg).toString('base64');
 await new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok);});
 let browser;
 try{
-browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH});
+browser=await browserEngine.launch({executablePath:process.env.CHROMIUM_PATH});
 const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
 const page=await context.newPage();
 const url='http://127.0.0.1:'+server.address().port+'/';
@@ -123,7 +126,12 @@ const shuffled=await readArrangement();
 assert.ok(shuffled[0]!==colors[0]||shuffled[1]!==colors[1]);
 await page.locator('#multi-pause').click();
 await page.locator('#multi-save').click();
-await page.waitForFunction(()=>document.querySelector('#multi-status').textContent.includes('Salvo neste navegador'));
+await page.waitForFunction(()=>/Salvo neste navegador|Sem espaço/.test(document.querySelector('#multi-status').textContent));
+assert.match(await page.locator('#multi-status').textContent(),/Salvo neste navegador/);
+assert.equal(await page.evaluate(async()=>{
+ const saved=await (await import('/src/multi-store.js')).readMulti();
+ return saved.version===2&&saved.images.every(i=>i.bytes instanceof ArrayBuffer&&i.bytes.byteLength>0);
+}),true);
 await page.reload();
 await page.locator('#multi-load').click();
 await page.waitForFunction(()=>document.querySelectorAll('#boards canvas').length===3);
@@ -185,7 +193,7 @@ for(const icon of manifest.icons){
 const files=await tab.evaluate(async()=>{const result=[];for(const s of await caches.keys())for(const r of await (await caches.open(s)).keys())result.push(new URL(r.url).pathname);return result;});
 // The first visit itself loaded modules before the worker controlled the page.
 for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/locales.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
-await offline.setOffline(true);
+networkAvailable=false;
 await tab.reload();
 await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
 await tab.waitForFunction(()=>!document.querySelector('#pause').disabled);
