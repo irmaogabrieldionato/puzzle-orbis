@@ -42,7 +42,10 @@ await page.keyboard.press('Enter');
 assert.match(await page.locator('#status').textContent(),/100%.*Movimentos: 3/);
 assert.match(await page.locator('#status').textContent(),/Novo recorde/);
 const rect={...state,cut:'rectangular',pieces:[2,1,0,3],initialPieces:[2,1,0,3],moves:9};
-await page.evaluate(v=>localStorage.setItem('puzzle-orbis-save',JSON.stringify(v)),rect);
+await page.evaluate(async v=>{
+ const {saveSingle}=await import('/src/multi-store.js');
+ await saveSingle(v);
+},rect);
 await page.reload();
 await page.locator('#language').selectOption('8');
 await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Movimentos: 9'));
@@ -62,7 +65,8 @@ console.log('PASS: mobile/touch, old save, pause and resume, rectangular selecti
 for(const mode of ['mixed','random']){
  await page.locator('#cut-mode').selectOption(mode);
  await page.locator('#save').click();
- const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('puzzle-orbis-save')));
+ await page.getByRole('status').filter({hasText:'Salvo neste navegador'}).waitFor();
+ const saved=await page.evaluate(async()=>(await import('/src/multi-store.js')).readSingle());
  assert.equal(saved.cut,mode);
  const position=await page.evaluate(async ({mode,data})=>{
   const {variableLayout}=await import('/src/variable-cuts.js');
@@ -72,7 +76,7 @@ for(const mode of ['mixed','random']){
   const board=document.querySelector('#board');
   return variableLayout(mode,4,board.width,board.height,id+':0').slice(0,2).map(r=>[r.x+r.width/2,r.y+r.height/2]);
  },{mode,data});
- await page.evaluate(v=>localStorage.setItem('puzzle-orbis-save',JSON.stringify(v)),{...state,cut:mode});
+ await page.evaluate(async v=>{await (await import('/src/multi-store.js')).saveSingle(v);},{...state,cut:mode});
  await page.reload();
  await page.locator('#language').selectOption('8');
  await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Movimentos: 2'));
@@ -84,6 +88,20 @@ for(const mode of ['mixed','random']){
  assert.match(await page.locator('#status').textContent(),/Novo recorde/);
  console.log('PASS: touch playthrough, save compatibility and isolated record in '+mode);
 }
+const paddedSvg=svg.replace('</svg>','<!--'+'.'.repeat(5*1024*1024)+'--></svg>');
+await page.locator('#file').setInputFiles({name:'grande.svg',mimeType:'image/svg+xml',buffer:Buffer.from(paddedSvg)});
+await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Movimentos: 0'));
+await page.locator('#pause').click();
+await page.locator('#save').click();
+await page.getByRole('status').filter({hasText:'Salvo neste navegador'}).waitFor();
+assert.equal(await page.evaluate(async()=>{
+ const row=await (await import('/src/multi-store.js')).readSingle();
+ return row.image.length>6*1024*1024 && row.paused;
+}),true);
+await page.reload();
+await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Movimentos: 0'));
+assert.equal(await page.locator('#pause').textContent(),'Continuar');
+console.log('PASS: single-image snapshot larger than common localStorage limits');
 await page.goto(url+'multi.html');
 await page.locator('#image-count').selectOption('3');
 const images=['<rect width="60" height="60" fill="red"/><rect x="60" width="60" height="60" fill="orange"/>','<rect width="120" height="60" fill="green"/>','<rect width="120" height="60" fill="blue"/>'];

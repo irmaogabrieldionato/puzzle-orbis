@@ -1,4 +1,4 @@
-const CACHE='puzzle-orbis-v10';
+const CACHE='puzzle-orbis-v11';
 const CACHE_PREFIX='puzzle-orbis-';
 const APP_SCOPE=self.registration.scope;
 const FILES=['./','./index.html','./account.html','./multi.html','./multi.css','./src/app.js','./src/engine.js','./src/i18n.js','./src/locales.js','./src/account.js','./src/auth-config.js','./src/rectangular.js','./src/storage.js','./src/timer.js','./src/variable-cuts.js','./src/multi-app.js','./src/multi-engine.js','./src/multi-store.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/maskable-512.png','./icons/apple-touch-icon.png'];

@@ -28,6 +28,7 @@ test('falha na confirmação da leitura não informa salvamento',()=>{
 });
 test('UI somente anuncia salvamento confirmado',()=>{
  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
- assert.match(app,/saveLocalSnapshot\(safeStorage,'puzzle-orbis-save'/);
- assert.match(app,/translatedStatus\(saved\?'saved':'noSpace'\)/);
+ assert.match(app,/saveLocalSnapshot\(safeStorage,SNAPSHOT_KEY,snapshot\)/);
+ assert.match(app,/translatedStatus\(result\?'saved':'noSpace'\)/);
+ assert.match(app,/saveSingle\(snapshot\)\.then\(\(\)=>mark\(true\),local\)/);
 });
