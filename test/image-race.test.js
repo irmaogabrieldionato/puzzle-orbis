@@ -11,7 +11,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
   const context = { clearRect(){}, drawImage(){}, strokeRect(){}, set strokeStyle(v){}, set lineWidth(v){}, set globalAlpha(v){} };
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
-      value: id === 'language' ? '8' : '0', textContent: '', files: [], parentElement:{firstChild:{textContent:''}}, add(){}, replaceChildren(){}, setAttribute(){},
+      value: id === 'language' ? '8' : '0', textContent: '', files: [], parentElement:{firstChild:{textContent:''},after(){}}, add(){}, replaceChildren(){}, setAttribute(){},
       getContext(){return context},
       addEventListener(){},
       getBoundingClientRect(){return {left:0,top:0,width:640,height:480}},
@@ -22,7 +22,7 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
   try {
     // A UI refresh timer is irrelevant to this test; do not keep Node's event loop alive.
     globalThis.setInterval = () => 0;
-    globalThis.document = {getElementById:element, documentElement:{lang:'pt-BR'}, querySelector(){return element('privacy')}};
+    globalThis.document = {getElementById:element, createElement(){return element('cut-mode')}, documentElement:{lang:'pt-BR'}, querySelector(){return element('privacy')}};
     globalThis.Option = class { constructor(label,value){this.label=label;this.value=value} };
     Object.defineProperty(globalThis,'navigator',{configurable:true,writable:true,value:{}});
     globalThis.localStorage = {getItem(key){return saved.get(key) ?? null},setItem(key,value){saved.set(key,value)}};
@@ -69,6 +69,26 @@ test('a imagem escolhida por último prevalece mesmo se a leitura anterior termi
     assert.equal(pendingImages[2].src,'data:image/png;base64,fourth');
     element('save').onclick();
     assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).image,'data:image/png;base64,fourth','a imagem antiga não deve substituir a imagem persistida');
+
+    const cut=element('cut-mode');
+    cut.value='rectangular';
+    cut.onchange();
+    element('save').onclick();
+    assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).cut,'rectangular');
+    const before = JSON.parse(saved.get('puzzle-orbis-save'));
+    cut.onchange();
+    element('save').onclick();
+    const after = JSON.parse(saved.get('puzzle-orbis-save'));
+    assert.deepEqual(after.pieces, before.pieces);
+    assert.deepEqual(after.initialPieces, before.initialPieces);
+    assert.equal(after.moves, before.moves);
+    element('reset').onclick();
+    element('save').onclick();
+    assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).cut,'rectangular');
+    cut.value='square';
+    cut.onchange();
+    element('save').onclick();
+    assert.equal(JSON.parse(saved.get('puzzle-orbis-save')).cut,'square');
 
     // Rejecting a later selection must invalidate a still-pending valid read.
     picker.files=[{type:'image/png',size:100,data:'data:image/png;base64,fifth'}];
