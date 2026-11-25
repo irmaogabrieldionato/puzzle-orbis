@@ -24,6 +24,9 @@ function applyLanguage(){
  const index=Number(lang.value);
  document.documentElement.lang=languageTag(index);
  document.documentElement.dir=direction(document.documentElement.lang);
+ const accountLink=document.querySelector('[data-orbis-account]');
+ if(accountLink?.hasAttribute?.('data-orbis-account'))import('./account-locales.js').then(({accountLocale})=>{accountLink.textContent=accountLocale(document.documentElement.lang).account;});
+
  document.title='Puzzle Orbis · '+t('multiTitle');
  for(const el of document.querySelectorAll('[data-t]'))el.textContent=t(el.dataset.t);
  for(const el of document.querySelectorAll('[data-image]'))el.textContent=t('image')+' '+el.dataset.image;

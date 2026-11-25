@@ -17,5 +17,5 @@ await writeFile('www/src/orbis-public-auth.json',JSON.stringify(settings));
 
 for(const page of ['index.html','multi.html']){
  const path='www/'+page, html=await readFile(path,'utf8');
- await writeFile(path,html.replace('<main>','<main><p><a style="color:#bae6fd" href="./account.html" lang="pt-BR">Conta Puzzle Orbis</a></p>'));
+ await writeFile(path,html.replace('<main>','<main><p><a style="color:#bae6fd" href="./account.html" data-orbis-account>Conta Puzzle Orbis</a></p>'));
 }
