@@ -198,7 +198,7 @@ assert.deepEqual(await readArrangement(),shuffled);
 assert.equal(await page.locator('#multi-pause').textContent(),'Continuar');
 await page.locator('#multi-pause').click();
 let multiMoves=0;
-for(let i=0;i<4;i++){
+for(let i=0;i<4 && !(await page.locator('#multi-pause').isDisabled());i++){
  const placement=await readArrangement();
  if(placement[i]===colors[i])continue;
  const from=placement.indexOf(colors[i]);
@@ -206,7 +206,9 @@ for(let i=0;i<4;i++){
  await tapSpace(i);await tapSpace(from);
  multiMoves++;
 }
-assert.deepEqual(await readArrangement(),colors);
+const completedArrangement=await readArrangement();
+assert.deepEqual(completedArrangement.slice(0,2),colors.slice(0,2));
+assert.deepEqual(completedArrangement.slice(2).sort(),colors.slice(2).sort());
 assert.match(await page.locator('#multi-status').textContent(),new RegExp('Concluído: 100%.*Movimentos: '+multiMoves));
 assert.ok(await page.locator('#multi-pause').isDisabled());
 await page.locator('#image-count').selectOption('2');
@@ -216,6 +218,39 @@ await page.locator('#start').click();
 await page.waitForFunction(()=>document.querySelectorAll('#boards canvas').length===2);
 assert.equal(await page.locator('#count-policy').inputValue(),'per-image');
 console.log('PASS: 3-image cross-board touch, IndexedDB reload, completion and 2-image setup');
+// Reproduce the user's 38% result: board 1 holds its own image (6 pieces);
+// boards 2 and 3 each hold the other's image (5 pieces each).
+const swappedBoards=[0,1,2,3,4,5,11,12,13,14,15,6,7,8,9,10];
+const nearSwap=[...swappedBoards];[nearSwap[6],nearSwap[7]]=[nearSwap[7],nearSwap[6]];
+const seedSwapped=async(pieces,elapsedMs)=>page.evaluate(async ({pieces,elapsedMs,images})=>{
+ const {saveMulti}=await import('/src/multi-store.js');
+ const encoded=images.map(art=>new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="60">'+art+'</svg>'));
+ await saveMulti({version:2,level:2,imageCount:3,policy:'total',cut:'square',
+  images:encoded.map(data=>({bytes:data.buffer,type:'image/svg+xml'})),
+  pieces,initialPieces:[1,0,2,3,4,5,6,7,8,9,10,11,12,13,14,15],moves:32,elapsedMs,paused:false});
+},{pieces,elapsedMs,images});
+await seedSwapped(nearSwap,4000);
+await page.locator('#multi-load').click();
+await page.waitForFunction(()=>document.querySelector('#multi-status').textContent.startsWith('Progresso: 88%'));
+await canvases.nth(1).focus();
+await page.keyboard.press('Enter');
+await page.keyboard.press('ArrowRight');
+await page.keyboard.press('Enter');
+assert.match(await page.locator('#multi-status').textContent(),/Concluído: 100%.*Movimentos: 33/);
+assert.deepEqual(await page.locator('#boards h2').allTextContents(),['Imagem 1 · 100%','Imagem 2 · 100%','Imagem 3 · 100%']);
+const finishTime=await page.locator('#multi-time').textContent();
+assert.equal(await page.locator('#multi-best').textContent(),finishTime);
+assert.ok(await page.locator('#multi-pause').isDisabled());
+await page.waitForTimeout(1150);
+assert.equal(await page.locator('#multi-time').textContent(),finishTime);
+await seedSwapped(swappedBoards,142000);
+await page.locator('#multi-load').click();
+await page.waitForFunction(()=>document.querySelector('#multi-time').textContent==='02:22'&&document.querySelector('#multi-status').textContent.startsWith('Concluído: 100%'));
+await page.waitForTimeout(1150);
+assert.equal(await page.locator('#multi-time').textContent(),'02:22');
+assert.equal(await page.locator('#multi-best').textContent(),finishTime);
+console.log('PASS: completed interchangeable boards report 100%, stop the clock, save a legitimate record, and restore an old completion');
+
 await page.locator('#image-count').selectOption('3');
 await page.locator('#multi-level').selectOption('9');
 await page.locator('#count-policy').selectOption('per-image');
