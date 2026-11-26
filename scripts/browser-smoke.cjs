@@ -7,7 +7,9 @@ const { resolve, extname, sep } = require('node:path');
 const root = resolve(__dirname, '../www');
 const types = {'.html':'text/html','.js':'text/javascript','.webmanifest':'application/manifest+json','.png':'image/png','.css':'text/css'};
 let networkAvailable=true;
+const serverRequests=[];
 const server = createServer(async (req, res) => {
+  serverRequests.push({path:req.url,online:networkAvailable});
   if(!networkAvailable){req.socket.destroy();return;}
   const pathname = new URL(req.url, 'http://localhost').pathname;
   const file = resolve(root, '.'+(pathname === '/' ? '/index.html' : pathname));
@@ -322,9 +324,15 @@ assert.equal(await page.locator('html').getAttribute('dir'),'rtl');
 assert.equal(await page.locator('input[type=email]').first().getAttribute('dir'),'ltr');
 assert.ok(await page.locator('#account-forms').isHidden());
 await context.close();
-{
+for(let attempt=1;attempt<=(browserEngine===webkit?2:1);attempt++){
 const offline=await browser.newContext();
+const requestStart=serverRequests.length;
+try {
 const tab=await offline.newPage();
+const offlineErrors=[];
+tab.on('pageerror',error=>offlineErrors.push(error.message));
+tab.on('requestfailed',request=>offlineErrors.push(request.url()+' '+request.failure()?.errorText));
+tab.on('console',message=>{if(['error','warning'].includes(message.type()))offlineErrors.push(message.type()+': '+message.text());});
 await tab.goto(url);
 await tab.waitForFunction(()=>navigator.serviceWorker?.controller?.state==='activated');
 const manifest=await (await tab.request.get(url+'manifest.webmanifest')).json();
@@ -339,25 +347,39 @@ for(const icon of manifest.icons){
 }
 const files=await tab.evaluate(async()=>{const result=[];for(const s of await caches.keys())for(const r of await (await caches.open(s)).keys())result.push(new URL(r.url).pathname);return result;});
 // The first visit itself loaded modules before the worker controlled the page.
-for(const p of ['/src/app.js','/src/timer.js','/src/i18n.js','/src/locales.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
+for(const p of ['/src/app.js','/src/engine.js','/src/timer.js','/src/i18n.js','/src/locales.js','/src/storage.js','/src/rectangular.js','/src/variable-cuts.js','/icons/icon-192.png'])assert.ok(files.includes(p),p+' was not cached on the first visit');
+const cacheSnapshot=()=>tab.evaluate(async()=>{
+ const entries=[];
+ for(const name of await caches.keys()){
+  const cache=await caches.open(name);
+  for(const request of await cache.keys()){
+   const response=await cache.match(request);
+   entries.push({path:new URL(request.url).pathname,status:response?.status,mime:response?.headers.get('content-type')});
+  }
+ }
+ const controller=navigator.serviceWorker?.controller;
+ return {controller:controller?{url:controller.scriptURL,state:controller.state}:null,entries};
+});
+const before=await cacheSnapshot();
 networkAvailable=false;
-await tab.reload();
-assert.ok(await tab.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
-const offlineErrors=[];
-tab.on('pageerror',error=>offlineErrors.push(error.message));
-tab.on('requestfailed',request=>offlineErrors.push(request.url()+' '+request.failure()?.errorText));
-// Wait for the module to bind the upload handler, not merely for static HTML.
-await tab.waitForFunction(()=>typeof document.querySelector('#file')?.onchange==='function');
-await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
 try {
+ await tab.reload();
+ assert.ok(await tab.locator('.hero-art').evaluate(svg=>svg.getBBox().width>0));
+ await tab.waitForFunction(()=>typeof document.querySelector('#file')?.onchange==='function');
+ await tab.locator('#file').setInputFiles({name:'puzzle.svg',mimeType:'image/svg+xml',buffer:Buffer.from(svg)});
  await tab.waitForFunction(()=>!document.querySelector('#pause').disabled);
+ await tab.goto(url+'multi.html');
+ await tab.waitForFunction(()=>document.querySelector('#multi-level').options.length===10);
 } catch(error) {
- console.error('Offline upload diagnostics:',await tab.locator('#status').textContent(),offlineErrors);
+ const after=await cacheSnapshot().catch(e=>({error:e.message}));
+ console.error('Offline diagnostics:',JSON.stringify({attempt,before,after,errors:offlineErrors,requests:serverRequests.slice(requestStart)}));
  throw error;
 }
-await tab.goto(url+'multi.html');
-await tab.waitForFunction(()=>document.querySelector('#multi-level').options.length===10);
-console.log('PASS: first-visit offline reload, image upload and multi-image mode');
+console.log('PASS: first-visit offline reload, image upload and multi-image mode, clean context '+attempt);
+} finally {
+ networkAvailable=true;
+ await offline.close();
+}
 }
 }finally{await browser?.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
