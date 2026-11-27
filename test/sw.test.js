@@ -14,6 +14,7 @@ function harness(online = true) {
   let skipped = false;
   const cache = {
     addAll: async files => { for (const file of files) stored.set(new URL(file, 'https://example.test/app/').href, {body:'precache'}); },
+    match: async request => stored.get(request.url),
     put: async (request, response) => { stored.set(request.url, response); },
   };
   const caches = {
@@ -30,8 +31,11 @@ function harness(online = true) {
 }
 
 test('instalação pré-armazena arquivos e ativa imediatamente',async()=>{const h=harness();await h.dispatch('install');assert.equal(h.skipped,true);for (const file of ['index.html','account.html','multi.html','multi.css','src/multi-app.js','src/multi-engine.js','src/multi-store.js','src/save-privacy.js','src/board-feedback.js','src/app.js','src/engine.js','src/i18n.js','src/locales.js','src/account.js','src/account-locales.js','src/auth-config.js','src/rectangular.js','src/storage.js','src/timer.js','src/variable-cuts.js','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/maskable-512.png','icons/apple-touch-icon.png']) assert.ok(h.stored.has('https://example.test/app/'+file),file);await h.dispatch('activate');assert.equal(h.claimed,true);assert.deepEqual(h.deleted,h.oldest);});
-test('rede tem prioridade e atualiza cache',async()=>{const h=harness();const request={method:'GET',url:'https://example.test/app/index.html'};const result=await h.dispatch('fetch',request);assert.equal(result.body,'network');assert.equal(h.stored.get(request.url).body,'network');});
+test('rede tem prioridade e atualiza cache para recurso fora do shell',async()=>{const h=harness();await h.dispatch('install');const request={method:'GET',url:'https://example.test/app/extra.js'};h.stored.set(request.url,{body:'old'});const result=await h.dispatch('fetch',request);assert.equal(result.body,'network');assert.equal(h.stored.get(request.url).body,'network');});
 test('offline utiliza resposta armazenada',async()=>{const h=harness(false);await h.dispatch('install');const result=await h.dispatch('fetch',{method:'GET',url:'https://example.test/app/index.html'});assert.equal(result.body,'precache');});
 test('não intercepta POST nem outras origens',async()=>{const h=harness();assert.equal(await h.dispatch('fetch',{method:'POST',url:'https://example.test/app/index.html'}),undefined);assert.equal(await h.dispatch('fetch',{method:'GET',url:'https://other.test/app/index.html'}),undefined);});
 
 test('não intercepta caminhos de outros aplicativos na mesma origem',async()=>{const h=harness();assert.equal(await h.dispatch('fetch',{method:'GET',url:'https://example.test/other-app/index.html'}),undefined);assert.equal(await h.dispatch('fetch',{method:'GET',url:'https://example.test/app-other/index.html'}),undefined);});
+
+test('shell instalado tem prioridade mesmo online',async()=>{const h=harness();await h.dispatch('install');const request={method:'GET',url:'https://example.test/app/index.html'};assert.equal((await h.dispatch('fetch',request)).body,'precache');});
+test('recurso fora do shell usa cache offline e configuração de autenticação não é interceptada',async()=>{const h=harness(false);await h.dispatch('install');const request={method:'GET',url:'https://example.test/app/extra.js'};h.stored.set(request.url,{body:'saved'});assert.equal((await h.dispatch('fetch',request)).body,'saved');const auth={method:'GET',url:'https://example.test/app/src/orbis-public-auth.json'};assert.equal(await h.dispatch('fetch',auth),undefined);assert.equal(h.stored.has(auth.url),false);});
